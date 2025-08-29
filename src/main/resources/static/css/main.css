@@ -1,0 +1,194 @@
+/* =========================
+   Base + lisibilité
+   ========================= */
+html {
+  font-size: 100%; /* 16px par défaut */
+  scroll-behavior: smooth;
+}
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  line-height: 1.6;
+  color: #1b1b1b;
+  background: #fff;
+}
+
+/* Contraste texte/lien */
+a {
+  color: #0b5cab;           /* bleu foncé accessible */
+  text-decoration: underline;
+}
+a:hover,
+a:focus {
+  color: #083f75;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+/* Titres : hiérarchie claire + espacements */
+h1, h2, h3 {
+  line-height: 1.25;
+  margin-top: 1.2rem;
+  margin-bottom: 0.6rem;
+}
+
+/* Espacement global contenu */
+.container, main {
+  margin-bottom: 2rem;
+}
+
+/* =========================
+   Focus visible (clavier)
+   ========================= */
+:focus {
+  outline: none; /* reset Bootstrap parfois trop discret */
+}
+:focus-visible {
+  outline: 3px solid #ffbf47;   /* jaune accessible */
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* =========================
+   Boutons & zones cliquables
+   ========================= */
+button, .btn, [role="button"] {
+  min-height: 44px;           /* cible tactile recommandée */
+  padding: 0.5rem 0.85rem;
+}
+.btn-primary {
+  background-color: #0b5cab;
+  border-color: #0b5cab;
+}
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background-color: #094b8c;
+  border-color: #094b8c;
+}
+
+/* Bouton danger avec contrastes suffisants */
+.btn-danger {
+  background-color: #b10e1e;
+  border-color: #b10e1e;
+}
+.btn-danger:hover,
+.btn-danger:focus-visible {
+  background-color: #8e0b18;
+  border-color: #8e0b18;
+}
+
+/* =========================
+   Formulaires
+   ========================= */
+label {
+  font-weight: 600;
+}
+.form-control {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+}
+.form-control:focus-visible {
+  outline: 3px solid #ffbf47;
+  outline-offset: 0; /* les inputs ont déjà un border */
+}
+/* Messages d’erreur (côté serveur) */
+.error, .invalid-feedback, .field-error {
+  color: #b10e1e;
+  font-size: 0.95rem;
+}
+
+/* =========================
+   Tableaux
+   ========================= */
+.table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.table th, .table td {
+  vertical-align: middle;
+}
+.table thead th {
+  background: #f5f5f5;
+  font-weight: 700;
+  border-bottom: 2px solid #d0d0d0;
+}
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #fafafa;
+}
+
+/* Responsive simple pour tableaux (fallback mobile) */
+@media (max-width: 576px) {
+  .table thead {
+    display: none;
+  }
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e6e6e6;
+  }
+  .table td {
+    display: grid;
+    grid-template-columns: 9ch 1fr;
+    gap: 0.5rem;
+  }
+  .table td::before {
+    content: attr(data-label);  /* penser à ajouter data-label côté HTML si possible */
+    font-weight: 700;
+    color: #333;
+  }
+}
+
+/* =========================
+   Liens “aller au contenu”
+   ========================= */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px; height: 1px;
+  overflow: hidden;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  left: 0;
+  top: 0;
+  width: auto; height: auto;
+  padding: 0.5rem 1rem;
+  background: #ffbf47;
+  color: #000;
+  z-index: 1000;
+}
+
+/* =========================
+   Visually hidden (pour texte auxiliaire)
+   ========================= */
+.sr-only,
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+.visually-hidden-focusable:active,
+.visually-hidden-focusable:focus,
+.visually-hidden-focusable:focus-visible {
+  position: static !important;
+  width: auto; height: auto;
+  margin: 0; overflow: visible; clip: auto;
+  white-space: normal;
+}
+
+/* =========================
+   Préférence utilisateur
+   ========================= */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+

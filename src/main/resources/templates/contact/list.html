@@ -1,19 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title th:text="${pageTitle}">Mes contacts</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr"
+      th:replace="~{layout/main :: page(~{::section})}"
+      th:with="pageTitle=${pageTitle}">
+<head></head>
 <body>
-
-<div th:replace="fragments/_header :: headerFrag"></div>
-
-<main class="container mt-4">
-    <h1 th:text="${pageTitle}">Mes contacts</h1>
+<section>
+    <h1 class="h2" th:text="${pageTitle}">Mes contacts</h1>
 
     <form class="form-inline mb-3" method="get" th:action="@{/contacts}">
-        <input class="form-control mr-2" type="text" name="q" th:value="${param.q}" placeholder="Rechercher…">
+        <label class="sr-only" for="search">Rechercher</label>
+        <input id="search" class="form-control mr-2" type="text" name="q"
+               th:value="${param.q}" placeholder="Rechercher…">
         <button class="btn btn-primary" type="submit">Rechercher</button>
     </form>
 
@@ -33,11 +30,11 @@
                 </form>
             </td>
         </tr>
+        <tr th:if="${#lists.isEmpty(contacts)}">
+            <td colspan="4"><em>Aucun contact</em></td>
+        </tr>
         </tbody>
     </table>
-</main>
-
-<div th:replace="fragments/_footer :: footerFrag"></div>
-
+</section>
 </body>
 </html>
