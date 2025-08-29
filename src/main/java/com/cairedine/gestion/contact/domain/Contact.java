@@ -1,17 +1,31 @@
 package com.cairedine.gestion.contact.domain;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.*;
 
-@Setter
-@Getter
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@Builder
+@Entity
 public class Contact {
-    //TODO: -> @Entity pour persister
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String firstName;
     private String lastName;
     private String email;
     private String phone;
 
-
+    public Contact(String ada, String lovelace, String mail, String number) {
+        this.firstName = ada;
+        this.lastName = lovelace;
+        this.email = mail;
+        this.phone = number;
+    }
 }

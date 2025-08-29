@@ -1,71 +1,43 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
-
 <head>
     <meta charset="UTF-8">
-    <title th:text="${pageTitle}">Contact Manager</title>
-    <!-- Exemple : intégrer Bootstrap pour le style -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-        integrity="sha384-jcK1I96n6e/gZPNxBkx1R/LFa0Kv6Z0D+3oxSbE/EUxdjrsKQoE+7lFKN/pyIyF8" crossorigin="anonymous">
+    <title th:text="${pageTitle}">Mes contacts</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
-
 <body>
 
-    <!-- Header -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-        <a class="navbar-brand" th:href="@{/}">Contacts</a>
-        <div class="navbar-nav">
-            <a class="nav-item nav-link" th:href="@{/contacts/new}">Nouveau</a>
-        </div>
-    </nav>
+<div th:replace="fragments/_header :: headerFrag"></div>
 
-    <!-- Contenu principal -->
-    <main class="container">
-        <h1 class="mb-4" th:text="${pageTitle} ?: 'Mes contacts'">Mes contacts</h1>
+<main class="container mt-4">
+    <h1 th:text="${pageTitle}">Mes contacts</h1>
 
-        <form class="form-inline mb-3" method="get" th:action="@{/contacts}">
-            <input class="form-control mr-2" type="text" name="q" th:value="${param.q}" placeholder="Rechercher…">
-            <button class="btn btn-primary" type="submit">Rechercher</button>
-        </form>
+    <form class="form-inline mb-3" method="get" th:action="@{/contacts}">
+        <input class="form-control mr-2" type="text" name="q" th:value="${param.q}" placeholder="Rechercher…">
+        <button class="btn btn-primary" type="submit">Rechercher</button>
+    </form>
 
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Email</th>
-                    <th>Téléphone</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="c : ${contacts}">
-                    <td th:text="|${c.lastName} ${c.firstName}|">Nom</td>
-                    <td th:text="${c.email}">email</td>
-                    <td th:text="${c.phone}">phone</td>
-                    <td>
-                        <a class="btn btn-sm btn-secondary" th:href="@{|/contacts/${c.id}/edit|}">
-                            Éditer
-                        </a>
-                        <form th:action="@{|/contacts/${c.id}/delete|}" method="post" style="display:inline">
-                            <button class="btn btn-sm btn-danger" type="submit"
-                                onclick="return confirm('Supprimer ce contact ?')">
-                                Supprimer
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </main>
+    <table class="table table-striped">
+        <thead>
+        <tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="c : ${contacts}">
+            <td th:text="|${c.lastName} ${c.firstName}|">Nom</td>
+            <td th:text="${c.email}">email</td>
+            <td th:text="${c.phone}">phone</td>
+            <td>
+                <a class="btn btn-sm btn-secondary" th:href="@{|/contacts/${c.id}/edit|}">Éditer</a>
+                <form th:action="@{|/contacts/${c.id}/delete|}" method="post" style="display:inline">
+                    <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('Supprimer ?')">Supprimer</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
 
-    <!-- Footer -->
-    <footer class="text-center mt-5 mb-3 text-muted">
-        <small>&copy; 2025 Contact Manager</small>
-    </footer>
+<div th:replace="fragments/_footer :: footerFrag"></div>
 
-    <!-- Optionnel : scripts Bootstrap -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
