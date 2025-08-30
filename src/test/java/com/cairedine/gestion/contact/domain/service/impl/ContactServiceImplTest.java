@@ -65,7 +65,7 @@ class ContactServiceImplTest {
 
     @Test
     void testFindPageWithQuery() {
-        String query = "Smith";
+        String query = "Doe";
         Pageable pageable = PageRequest.of(1, 5, Sort.by("lastName").and(Sort.by("firstName")));
         var contact = Contact.builder().firstName("John").lastName("Doe").build();
         Page<Contact> expectedPage = new PageImpl<>(List.of(contact));

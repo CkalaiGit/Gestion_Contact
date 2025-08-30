@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr"
+      th:replace="~{layout/main :: page(~{::section})}"
+      th:with="pageTitle=${pageTitle}">
+<head></head>
+<body>
+<section>
+    <h1 th:text="${pageTitle}">Bienvenue</h1>
+
+    <p>
+        Ceci est une page d’accueil qui sert de <strong>README</strong> pour le projet.
+    </p>
+
+    <h2>Structure du projet</h2>
+    <ul>
+        <li><code>domain/</code> : les entités métiers (ex: Contact)</li>
+        <li><code>repository/</code> : interfaces Spring Data JPA</li>
+        <li><code>service/</code> : logique métier (interfaces + implémentations)</li>
+        <li><code>web/</code> : contrôleurs Spring MVC</li>
+        <li><code>templates/</code> : vues Thymeleaf (HTML avec fragments/layouts)</li>
+        <li><code>static/</code> : ressources statiques (CSS, JS, images)</li>
+    </ul>
+
+    <h2>Fonctionnalités actuelles</h2>
+    <ul>
+        <li>Gestion des contacts avec Spring Boot + Spring Data JPA (H2 en mémoire)</li>
+        <li>Affichage de la liste avec pagination (5/10/15 par page)</li>
+        <li>Recherche par nom, prénom ou email</li>
+        <li>UI avec Thymeleaf + Bootstrap + règles RGAA</li>
+    </ul>
+
+    <h2>Évolutions prévues</h2>
+    <ol>
+        <li>Formulaires CRUD (ajout/édition/suppression)</li>
+        <li>Authentification Spring Security → Keycloak</li>
+        <li>Migration vers PostgreSQL</li>
+        <li>Refactorisation en microservices</li>
+        <li>Conteneurisation Docker</li>
+        <li>CI/CD</li>
+    </ol>
+
+    <p>
+        👉 Accéder directement à la
+        <a th:href="@{/contacts}">liste des contacts</a>.
+    </p>
+</section>
+</body>
+</html>
