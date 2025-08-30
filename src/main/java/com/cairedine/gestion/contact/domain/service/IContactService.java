@@ -9,5 +9,5 @@ public interface IContactService {
 
     List<Contact> findAllSorted();
     Page<Contact> findPage(String query, int page, int size);
-
+    void create(Contact contact);
 }

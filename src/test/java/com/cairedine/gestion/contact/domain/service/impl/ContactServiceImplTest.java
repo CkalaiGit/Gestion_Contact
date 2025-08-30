@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -38,8 +40,17 @@ class ContactServiceImplTest {
         when(iContactRepository.findAll(any(Sort.class))).thenReturn(List.of(ada, cairedine));
 
         var list = contactService.findAllSorted();
+
+        // Création d'un "captor" pour des arguments de type Sort
         ArgumentCaptor<Sort> sortCap = ArgumentCaptor.forClass(Sort.class);
+
+        /*
+        Quand Mockito exécute verify(...), il ne se contente pas de dire “ok, l’appel a eu lieu”,
+           il stocke l’argument réel passé dans sortCap.
+         */
+
         verify(iContactRepository).findAll(sortCap.capture());
+
         var sort = sortCap.getValue().toString();
         assertTrue(sort.contains("lastName: ASC"));
         assertTrue(sort.contains("firstName: ASC"));
@@ -48,19 +59,37 @@ class ContactServiceImplTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { " ", "   ", "\t", "\n" })
-    void testFindPageWithoutQuery() {
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("lastName").and(Sort.by("firstName")));
-        var contact = Contact.builder().firstName("John").lastName("Doe").build();
-        Page<Contact> expectedPage = new PageImpl<>(List.of(contact));
+    @NullSource
+    @EmptySource
+    @ValueSource(strings = { " ", "\t", "\n", "   " })
+    void findPage_noQuery_usesFindAll(String query) {
+        // Arrange
+        var expectedContact = Contact.builder().firstName("John").lastName("Doe").build();
+        Page<Contact> expectedPage = new PageImpl<>(List.of(expectedContact));
+        Mockito.when(iContactRepository.findAll(Mockito.any(Pageable.class))).thenReturn(expectedPage);
 
-        Mockito.when(iContactRepository.findAll(pageable)).thenReturn(expectedPage);
+        // Act
+        Page<Contact> result = contactService.findPage(query, 0, 10);
 
-        Page<Contact> result = contactService.findPage(null, 0, 10);
-
+        // Assert
         Assertions.assertEquals(expectedPage, result);
-        Mockito.verify(iContactRepository).findAll(pageable);
-        Mockito.verify(iContactRepository, Mockito.never()).search(Mockito.anyString(), Mockito.any());
+
+        // Vérifie que search N'EST PAS appelé
+        Mockito.verify(iContactRepository, Mockito.never())
+                .search(Mockito.anyString(), Mockito.any(Pageable.class));
+
+        // Capture et vérifie le Pageable utilisé par findAll
+        ArgumentCaptor<Pageable> pageableCap = ArgumentCaptor.forClass(Pageable.class);
+        Mockito.verify(iContactRepository).findAll(pageableCap.capture());
+
+        Pageable used = pageableCap.getValue();
+        Assertions.assertEquals(0, used.getPageNumber());
+        Assertions.assertEquals(10, used.getPageSize());
+
+        // Vérifie le tri: lastName ASC puis firstName ASC
+        Sort sort = used.getSort();
+        Assertions.assertEquals(Sort.Direction.ASC, sort.getOrderFor("lastName").getDirection());
+        Assertions.assertEquals(Sort.Direction.ASC, sort.getOrderFor("firstName").getDirection());
     }
 
     @Test

@@ -35,4 +35,9 @@ public class ContactServiceImpl implements IContactService {
         }
         return contactRepository.search(query.trim(), pageable);
     }
+
+    @Override
+    public void create(Contact contact) {
+        //TODO : check si l'email existe si oui renvoi un 409
+    }
 }

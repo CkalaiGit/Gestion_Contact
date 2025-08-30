@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr"
+      th:replace="~{layout/main :: page(~{::section})}"
+      th:with="pageTitle=${pageTitle}">
+<body>
+<section>
+    <h1 th:text="${pageTitle}">Nouveau contact</h1>
+
+    <!-- Formulaire lié à l'objet contact -->
+    <form th:action="@{/contacts}" th:object="${contact}" method="post" class="needs-validation" novalidate>
+
+        <div class="form-group">
+            <label for="firstName">Prénom</label>
+            <input type="text" id="firstName" th:field="*{firstName}" class="form-control" required>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="lastName">Nom</label>
+            <input type="text" id="lastName" th:field="*{lastName}" class="form-control" required>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" th:field="*{email}" class="form-control" required>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="phone">Téléphone</label>
+            <input type="text" id="phone" th:field="*{phone}" class="form-control"
+                   placeholder="06 12 34 56 78 ou +33 6 12 34 56 78">
+            <div class="invalid-feedback"
+                 th:if="${#fields.hasErrors('phone')}"
+                 th:errors="*{phone}">Erreur téléphone</div>
+        </div>
+
+        <button type="submit" class="btn btn-success">Enregistrer</button>
+        <a th:href="@{/contacts}" class="btn btn-secondary">Annuler</a>
+    </form>
+</section>
+</body>
+</html>

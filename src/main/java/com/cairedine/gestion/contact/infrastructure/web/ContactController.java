@@ -2,22 +2,25 @@ package com.cairedine.gestion.contact.infrastructure.web;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
 import com.cairedine.gestion.contact.domain.service.IContactService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/contacts")
 public class ContactController {
 
     private final IContactService iContactService;
 
-    @GetMapping("/contacts")
+    @GetMapping
     public String list(@RequestParam(value = "q", required = false) String query,
                        @RequestParam(value = "page", defaultValue = "0") int page,
                        @RequestParam(value = "size", defaultValue = "10") int size,
@@ -38,5 +41,28 @@ public class ContactController {
         return "contact/list";
     }
 
+    @GetMapping("/new")
+    public String showCreateForm(Model model) {
+        model.addAttribute("pageTitle", "Nouveau contact");
+        model.addAttribute("contact", new Contact()); // objet vide pour binding
+        return "contact/form";
+    }
+
+    @PostMapping
+    public String createContact(
+            @Valid @ModelAttribute("contact") Contact contact,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("pageTitle", "Nouveau contact");
+            return "contact/form"; // retourne au formulaire avec erreurs
+        }
+
+        iContactService.create(contact);
+        redirectAttributes.addFlashAttribute("msg", "Contact créé avec succès");
+        return "redirect:/contacts";
+    }
 
 }
