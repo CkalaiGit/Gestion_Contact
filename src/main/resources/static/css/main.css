@@ -1,194 +1,172 @@
 /* =========================
-   Base + lisibilité
+   🎨 Variables de thème (à adapter à ta charte)
    ========================= */
-html {
-  font-size: 100%; /* 16px par défaut */
-  scroll-behavior: smooth;
-}
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-  line-height: 1.6;
-  color: #1b1b1b;
-  background: #fff;
-}
+:root{
+  /* Couleurs de marque (contrastées) */
+  --brand-primary: #0b5cab;         /* liens/boutons principaux */
+  --brand-primary-dark: #094b8c;
+  --brand-secondary: #6b7280;       /* gris neutre */
+  --brand-danger: #b10e1e;          /* actions destructives */
+  --brand-danger-dark: #8e0b18;
 
-/* Contraste texte/lien */
-a {
-  color: #0b5cab;           /* bleu foncé accessible */
-  text-decoration: underline;
-}
-a:hover,
-a:focus {
-  color: #083f75;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 2px;
-}
+  /* Couleurs de fond & texte */
+  --bg: #ffffff;
+  --text: #1b1b1b;
+  --muted: #666666;
+  --surface: #f7f7f7;
+  --border: #d0d0d0;
 
-/* Titres : hiérarchie claire + espacements */
-h1, h2, h3 {
-  line-height: 1.25;
-  margin-top: 1.2rem;
-  margin-bottom: 0.6rem;
-}
+  /* Focus (très visible) */
+  --focus: #ffbf47;
 
-/* Espacement global contenu */
-.container, main {
-  margin-bottom: 2rem;
+  /* Typo & rythme */
+  --font-sans: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --leading: 1.6;
+  --radius: .375rem;
+  --space-1: .5rem;
+  --space-2: .75rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --maxw: 78rem; /* ~1248px */
 }
 
 /* =========================
-   Focus visible (clavier)
+   Base
    ========================= */
-:focus {
-  outline: none; /* reset Bootstrap parfois trop discret */
+html{ font-size:100%; scroll-behavior:smooth; }
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-sans);
+  line-height:var(--leading);
 }
-:focus-visible {
-  outline: 3px solid #ffbf47;   /* jaune accessible */
-  outline-offset: 2px;
-  border-radius: 2px;
+main.container{ max-width:var(--maxw); }
+
+/* Liens */
+a{ color:var(--brand-primary); text-decoration:underline; }
+a:hover, a:focus{ color:var(--brand-primary-dark); text-decoration-thickness:2px; text-underline-offset:2px; }
+
+/* Titres & espacements */
+h1,h2,h3{ line-height:1.25; margin:var(--space-4) 0 var(--space-2); }
+.container, main{ margin-bottom:var(--space-4); }
+
+/* =========================
+   Accessibilité : focus
+   ========================= */
+:focus{ outline:none; }
+:focus-visible{
+  outline:3px solid var(--focus);
+  outline-offset:2px;
+  border-radius:2px;
 }
 
 /* =========================
-   Boutons & zones cliquables
+   Boutons (surcouche Bootstrap)
    ========================= */
-button, .btn, [role="button"] {
-  min-height: 44px;           /* cible tactile recommandée */
-  padding: 0.5rem 0.85rem;
+button,.btn,[role="button"]{ min-height:44px; padding:.55rem .9rem; }
+
+.btn-primary{
+  background-color:var(--brand-primary);
+  border-color:var(--brand-primary);
 }
-.btn-primary {
-  background-color: #0b5cab;
-  border-color: #0b5cab;
-}
-.btn-primary:hover,
-.btn-primary:focus-visible {
-  background-color: #094b8c;
-  border-color: #094b8c;
+.btn-primary:hover,.btn-primary:focus-visible{
+  background-color:var(--brand-primary-dark);
+  border-color:var(--brand-primary-dark);
 }
 
-/* Bouton danger avec contrastes suffisants */
-.btn-danger {
-  background-color: #b10e1e;
-  border-color: #b10e1e;
+.btn-danger{
+  background-color:var(--brand-danger);
+  border-color:var(--brand-danger);
 }
-.btn-danger:hover,
-.btn-danger:focus-visible {
-  background-color: #8e0b18;
-  border-color: #8e0b18;
+.btn-danger:hover,.btn-danger:focus-visible{
+  background-color:var(--brand-danger-dark);
+  border-color:var(--brand-danger-dark);
 }
 
 /* =========================
    Formulaires
    ========================= */
-label {
-  font-weight: 600;
-}
-.form-control {
-  min-height: 44px;
-  padding: 0.5rem 0.75rem;
-}
-.form-control:focus-visible {
-  outline: 3px solid #ffbf47;
-  outline-offset: 0; /* les inputs ont déjà un border */
-}
-/* Messages d’erreur (côté serveur) */
-.error, .invalid-feedback, .field-error {
-  color: #b10e1e;
-  font-size: 0.95rem;
-}
+label{ font-weight:600; }
+.form-control{ min-height:44px; padding:.5rem .75rem; }
+.form-control:focus-visible{ outline:3px solid var(--focus); outline-offset:0; }
+.invalid-feedback,.error,.field-error{ color:var(--brand-danger); font-size:.95rem; }
 
 /* =========================
    Tableaux
    ========================= */
-.table {
-  border-collapse: collapse;
-  width: 100%;
+.table{ width:100%; border-collapse:collapse; }
+.table th,.table td{ vertical-align:middle; }
+.table thead th{
+  background:var(--surface);
+  font-weight:700;
+  border-bottom:2px solid var(--border);
 }
-.table th, .table td {
-  vertical-align: middle;
-}
-.table thead th {
-  background: #f5f5f5;
-  font-weight: 700;
-  border-bottom: 2px solid #d0d0d0;
-}
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: #fafafa;
-}
+.table-striped tbody tr:nth-of-type(odd){ background-color:#fafafa; }
 
-/* Responsive simple pour tableaux (fallback mobile) */
-@media (max-width: 576px) {
-  .table thead {
-    display: none;
-  }
-  .table tbody tr {
-    display: grid;
-    grid-template-columns: 1fr;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #e6e6e6;
-  }
-  .table td {
-    display: grid;
-    grid-template-columns: 9ch 1fr;
-    gap: 0.5rem;
-  }
-  .table td::before {
-    content: attr(data-label);  /* penser à ajouter data-label côté HTML si possible */
-    font-weight: 700;
-    color: #333;
-  }
+/* Mobile-friendly tables (fallback) */
+@media (max-width:576px){
+  .table thead{ display:none; }
+  .table tbody tr{ display:grid; grid-template-columns:1fr; padding:.75rem 0; border-bottom:1px solid #e6e6e6; }
+  .table td{ display:grid; grid-template-columns:9ch 1fr; gap:.5rem; }
+  .table td::before{ content:attr(data-label); font-weight:700; color:#333; }
 }
 
 /* =========================
-   Liens “aller au contenu”
+   Skip link
    ========================= */
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  top: auto;
-  width: 1px; height: 1px;
-  overflow: hidden;
+.skip-link{
+  position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;
 }
-.skip-link:focus,
-.skip-link:focus-visible {
-  left: 0;
-  top: 0;
-  width: auto; height: auto;
-  padding: 0.5rem 1rem;
-  background: #ffbf47;
-  color: #000;
-  z-index: 1000;
+.skip-link:focus,.skip-link:focus-visible{
+  left:0; top:0; width:auto; height:auto; padding:.5rem 1rem;
+  background:var(--focus); color:#000; z-index:1000;
 }
 
 /* =========================
-   Visually hidden (pour texte auxiliaire)
+   Visually hidden
    ========================= */
-.sr-only,
-.visually-hidden {
-  position: absolute !important;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,0,0);
-  white-space: nowrap; border: 0;
+.sr-only,.visually-hidden{
+  position:absolute!important; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
 }
-.visually-hidden-focusable:active,
 .visually-hidden-focusable:focus,
-.visually-hidden-focusable:focus-visible {
-  position: static !important;
-  width: auto; height: auto;
-  margin: 0; overflow: visible; clip: auto;
-  white-space: normal;
+.visually-hidden-focusable:focus-visible{
+  position:static!important; width:auto; height:auto; margin:0; overflow:visible; clip:auto; white-space:normal;
 }
 
 /* =========================
    Préférence utilisateur
    ========================= */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important; scroll-behavior:auto!important; }
 }
 
+/* Déclaration Latin Modern Roman Regular */
+@font-face {
+  font-family: 'LMRoman';
+  src: url('/fonts/lmroman-regular.woff2') format('woff2'),
+       url('/fonts/lmroman-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
+/* Déclaration Bold */
+@font-face {
+  font-family: 'LMRoman';
+  src: url('/fonts/lmroman-bold.woff2') format('woff2'),
+       url('/fonts/lmroman-bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Déclaration Italic */
+@font-face {
+  font-family: 'LMRoman';
+  src: url('/fonts/lmroman-italic.woff2') format('woff2'),
+       url('/fonts/lmroman-italic.woff') format('woff');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}

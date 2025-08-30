@@ -14,27 +14,40 @@
         <button class="btn btn-primary" type="submit">Rechercher</button>
     </form>
 
-    <table class="table table-striped">
-        <thead>
-        <tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Actions</th></tr>
+    <table class="table table-striped table-bordered">
+        <thead class="thead-light">
+        <tr>
+            <th scope="col">Nom</th>
+            <th scope="col">Email</th>
+            <th scope="col">Téléphone</th>
+            <th scope="col">Actions</th>
+        </tr>
         </thead>
         <tbody>
+        <!-- Boucle Thymeleaf -->
         <tr th:each="c : ${contacts}">
-            <td th:text="|${c.lastName} ${c.firstName}|">Nom</td>
-            <td th:text="${c.email}">email</td>
-            <td th:text="${c.phone}">phone</td>
-            <td>
+            <td data-label="Nom" th:text="|${c.lastName} ${c.firstName}|">Nom</td>
+            <td data-label="Email" th:text="${c.email}">email</td>
+            <td data-label="Téléphone" th:text="${c.phone}">téléphone</td>
+            <td data-label="Actions">
                 <a class="btn btn-sm btn-secondary" th:href="@{|/contacts/${c.id}/edit|}">Éditer</a>
                 <form th:action="@{|/contacts/${c.id}/delete|}" method="post" style="display:inline">
-                    <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('Supprimer ?')">Supprimer</button>
+                    <button class="btn btn-sm btn-danger"
+                            type="submit"
+                            onclick="return confirm('Supprimer ?')">
+                        Supprimer
+                    </button>
                 </form>
             </td>
         </tr>
+
+        <!-- Cas aucun contact -->
         <tr th:if="${#lists.isEmpty(contacts)}">
             <td colspan="4"><em>Aucun contact</em></td>
         </tr>
         </tbody>
     </table>
+
 </section>
 </body>
 </html>
