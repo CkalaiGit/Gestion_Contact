@@ -1,8 +1,10 @@
 package com.cairedine.gestion.contact.domain.service.impl;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.domain.service.IContactService;
 import com.cairedine.gestion.contact.infrastructure.repository.IContactRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,7 +39,11 @@ public class ContactServiceImpl implements IContactService {
     }
 
     @Override
+    @Transactional
     public void create(Contact contact) {
-        //TODO : check si l'email existe si oui renvoi un 409
+        if (contactRepository.existsByEmailIgnoreCase(contact.getEmail())) {
+            throw new EmailAlreadyExistsException("Email déjà utilisé: " + contact.getEmail());
+        }
+        contactRepository.save(contact);
     }
 }

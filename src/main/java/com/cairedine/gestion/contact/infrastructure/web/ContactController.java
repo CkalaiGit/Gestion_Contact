@@ -1,6 +1,7 @@
 package com.cairedine.gestion.contact.infrastructure.web;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.domain.service.IContactService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -57,12 +58,20 @@ public class ContactController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("pageTitle", "Nouveau contact");
-            return "contact/form"; // retourne au formulaire avec erreurs
+            return "contact/form";
         }
 
-        iContactService.create(contact);
+        try {
+            iContactService.create(contact);
+        } catch (EmailAlreadyExistsException e) {
+            bindingResult.rejectValue("email", "error.contact", e.getMessage());
+            model.addAttribute("pageTitle", "Nouveau contact");
+            return "contact/form";
+        }
+
         redirectAttributes.addFlashAttribute("msg", "Contact créé avec succès");
         return "redirect:/contacts";
     }
+
 
 }

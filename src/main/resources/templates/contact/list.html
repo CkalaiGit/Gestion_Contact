@@ -2,10 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr"
       th:replace="~{layout/main :: page(~{::section})}"
       th:with="pageTitle=${pageTitle}">
-<head></head>
+<head>
+    <title>Contacts</title>
+</head>
 <body>
 <section>
     <h1 class="h2" th:text="${pageTitle}">Mes contacts</h1>
+
+    <div th:if="${msg}" class="alert alert-success" role="alert" th:text="${msg}"></div>
 
     <form class="form-inline mb-3" method="get" th:action="@{/contacts}">
         <label class="sr-only" for="search">Rechercher</label>
@@ -17,7 +21,8 @@
                 <option th:each="s : ${pageSizes}"
                         th:value="${s}"
                         th:selected="${s} == ${size}"
-                        th:text="${s} + ' / page'">10 / page</option>
+                        th:text="${s} + ' / page'">10 / page
+                </option>
             </select>
         </label>
 

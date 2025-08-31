@@ -17,5 +17,7 @@ public interface IContactRepository extends JpaRepository<Contact, Long> {
           OR LOWER(c.email)     LIKE LOWER(CONCAT('%', :q, '%'))
        """)
     Page<Contact> search(@Param("q") String q, Pageable pageable);
+
+    boolean existsByEmailIgnoreCase(String email);
 }
 
