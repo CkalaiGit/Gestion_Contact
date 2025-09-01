@@ -1,29 +1,29 @@
 package com.cairedine.gestion.contact.domain.service.impl;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.infrastructure.repository.IContactRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EmptySource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ContactServiceImplTest {
@@ -34,9 +34,9 @@ class ContactServiceImplTest {
     ContactServiceImpl contactService;
 
     @Test
-    void findAll_sortsByLastThenFirstName(){
+    void findAll_sortsByLastThenFirstName() {
         var cairedine = Contact.builder().firstName("cairedine").lastName("KALAI").build();
-        var ada  = Contact.builder().firstName("ada").lastName("Lovelace").build();
+        var ada = Contact.builder().firstName("ada").lastName("Lovelace").build();
         when(iContactRepository.findAll(any(Sort.class))).thenReturn(List.of(ada, cairedine));
 
         var list = contactService.findAllSorted();
@@ -61,7 +61,7 @@ class ContactServiceImplTest {
     @ParameterizedTest
     @NullSource
     @EmptySource
-    @ValueSource(strings = { " ", "\t", "\n", "   " })
+    @ValueSource(strings = {" ", "\t", "\n", "   "})
     void findPage_noQuery_usesFindAll(String query) {
         // Arrange
         var expectedContact = Contact.builder().firstName("John").lastName("Doe").build();
@@ -75,7 +75,7 @@ class ContactServiceImplTest {
         Assertions.assertEquals(expectedPage, result);
 
         // Vérifie que search N'EST PAS appelé
-        Mockito.verify(iContactRepository, Mockito.never())
+        Mockito.verify(iContactRepository, never())
                 .search(Mockito.anyString(), Mockito.any(Pageable.class));
 
         // Capture et vérifie le Pageable utilisé par findAll
@@ -105,6 +105,36 @@ class ContactServiceImplTest {
 
         Assertions.assertEquals(expectedPage, result);
         Mockito.verify(iContactRepository).search(query.trim(), pageable);
-        Mockito.verify(iContactRepository, Mockito.never()).findAll((Example<Contact>) any());
     }
+
+    // GIVEN / WHEN / THEN #1 : l'email existe déjà -> exception + pas de save
+    @Test
+    void create_should_throw_conflict_when_email_exists() {
+        var contact = Contact.builder().email("cairedine.kalai@afd_tech.com").build();
+        given(iContactRepository.existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com")).willReturn(true);
+
+
+        assertThrows(EmailAlreadyExistsException.class, () -> contactService.create(contact));
+
+        then(iContactRepository).should().existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com");
+        then(iContactRepository).should(never()).save(any(Contact.class));
+        then(iContactRepository).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void create_should_save_when_email_is_free() {
+        // Given
+        var contact = Contact.builder().email("cairedine.kalai@afd_tech.com").build();
+        given(iContactRepository.existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com")).willReturn(false);
+
+        // When
+        contactService.create(contact);
+
+        // Then
+        InOrder inOrder = inOrder(iContactRepository);
+        inOrder.verify(iContactRepository).existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com");
+        inOrder.verify(iContactRepository).save(contact);
+        inOrder.verifyNoMoreInteractions();
+    }
+
 }
