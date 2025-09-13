@@ -198,4 +198,21 @@ class ContactControllerTest {
     }
 
 
+    @Test
+    public void testShowEditForm() throws Exception {
+        Contact mockContact = new Contact();
+        mockContact.setId(1L);
+        mockContact.setLastName("Kalai");
+
+        when(contactService.findById(1L)).thenReturn(mockContact);
+
+        mvc.perform(get("/contacts/" + 1L + "/edit"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("contact/form"))
+                .andExpect(model().attributeExists("contact"))
+                .andExpect(model().attribute("contact", mockContact))
+                .andExpect(model().attribute("pageTitle", "Éditer le contact"));
+
+        verify(contactService, times(1)).findById(1L);
+    }
 }
