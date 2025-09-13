@@ -10,4 +10,7 @@ public interface IContactService {
     List<Contact> findAllSorted();
     Page<Contact> findPage(String query, int page, int size);
     void create(Contact contact);
+    void update(Long id, Contact contact);
+    Contact findById(Long id);
+    void deleteById(Long id);
 }

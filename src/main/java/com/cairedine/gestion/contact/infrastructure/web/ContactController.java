@@ -73,4 +73,42 @@ public class ContactController {
         return "redirect:/contacts";
     }
 
+    @GetMapping("/{id}/edit")
+    public String showEditForm(@PathVariable Long id, Model model) {
+        Contact contact = iContactService.findById(id);
+        model.addAttribute("pageTitle", "Éditer le contact");
+        model.addAttribute("contact", contact);
+        return "contact/form";
+    }
+
+    @PostMapping("/{id}")
+    public String updateContact(@PathVariable Long id,
+                                @Valid @ModelAttribute("contact") Contact contact,
+                                BindingResult bindingResult,
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("pageTitle", "Éditer le contact");
+            return "contact/form";
+        }
+        try {
+            iContactService.update(id, contact); // l’id de l’URL fait foi
+        } catch (EmailAlreadyExistsException e) {
+            bindingResult.rejectValue("email", "error.contact", e.getMessage());
+            model.addAttribute("pageTitle", "Éditer le contact");
+            return "contact/form";
+        }
+        redirectAttributes.addFlashAttribute("msg", "Contact mis à jour");
+        return "redirect:/contacts";
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteContact(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        iContactService.deleteById(id);
+        redirectAttributes.addFlashAttribute("msg", "Contact mis à jour");
+        return "redirect:/contacts";
+    }
+
+
 }
+

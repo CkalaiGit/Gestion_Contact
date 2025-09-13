@@ -134,4 +134,13 @@ class ContactServiceImplTest {
         inOrder.verifyNoMoreInteractions();
     }
 
+    @Test
+    void deleteById() {
+        doNothing().when(iContactRepository).deleteById(1L);
+        contactService.deleteById(1L);
+        InOrder inOrder = inOrder(iContactRepository);
+        inOrder.verify(iContactRepository).deleteById(1L);
+
+        verify(iContactRepository, times(1)).deleteById(1L);
+    }
 }

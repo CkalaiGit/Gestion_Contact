@@ -46,4 +46,38 @@ public class ContactServiceImpl implements IContactService {
         }
         contactRepository.save(contact);
     }
+
+    @Override
+    @Transactional
+    public void update(Long id, Contact contact) {
+
+        Contact existing = contactRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Contact introuvable: " + id));
+
+        String newEmail = contact.getEmail();
+        if (newEmail != null && !newEmail.equalsIgnoreCase(existing.getEmail())) {
+            if (contactRepository.existsByEmailIgnoreCase(contact.getEmail())) {
+                throw new EmailAlreadyExistsException("Email déjà utilisé: " + newEmail);
+            }
+        }
+
+        existing.setFirstName(contact.getFirstName());
+        existing.setLastName(contact.getLastName());
+        existing.setEmail(contact.getEmail());
+        existing.setPhone(contact.getPhone());
+
+        contactRepository.save(existing);
+    }
+
+    @Override
+    public Contact findById(Long id) {
+        return contactRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Contact introuvable: " + id));
+    }
+
+
+    @Override
+    public void deleteById(Long id) {
+        contactRepository.deleteById(id);
+    }
 }

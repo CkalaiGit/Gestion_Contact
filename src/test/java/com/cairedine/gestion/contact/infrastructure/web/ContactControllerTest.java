@@ -18,8 +18,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.jsoup.Jsoup;
@@ -185,5 +184,18 @@ class ContactControllerTest {
         assertNotNull(emailError);
         assertTrue(emailError.text().contains("Cet email existe déjà"));
     }
+
+    @Test
+    public void testDeleteContact() throws Exception {
+
+        doNothing().when(contactService).deleteById(1L);
+
+        mvc.perform(delete("/contacts/" + 1L))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/contacts"));
+
+        verify(contactService, times(1)).deleteById(1L);
+    }
+
 
 }

@@ -48,7 +48,7 @@
             <td data-label="Téléphone" th:text="${c.phone}">téléphone</td>
             <td data-label="Actions">
                 <a class="btn btn-sm btn-secondary" th:href="@{|/contacts/${c.id}/edit|}">Éditer</a>
-                <form th:action="@{|/contacts/${c.id}/delete|}" method="post" style="display:inline">
+                <form th:action="@{|/contacts/${c.id}|}" method="post" style="display:inline">
                     <button class="btn btn-sm btn-danger"
                             type="submit"
                             onclick="return confirm('Supprimer ?')">
