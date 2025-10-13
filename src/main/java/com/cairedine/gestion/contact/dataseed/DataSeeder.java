@@ -17,10 +17,11 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (contactRepository.count() == 0) {
-            contactRepository.save(new Contact("Ada", "Lovelace", "ada@acme.com", "0601010101"));
-            contactRepository.save(new Contact("Alan", "Turing", "alan@acme.com", "0602020202"));
-            contactRepository.save(new Contact("Grace", "Hopper", "grace@acme.com", "0603030303"));
-            contactRepository.save(new Contact("Cairedine", "KALAI", "ck@acme.com", "0603530378"));
+            contactRepository.save(new Contact(1L, "Ada", "Lovelace", "ada@acme.com", "0601010101"));
+            contactRepository.save(new Contact(2L, "Alan", "Turing", "alan@acme.com", "0602020202"));
+            contactRepository.save(new Contact(3L, "Grace", "Hopper", "grace@acme.com", "0603030303"));
+            contactRepository.save(new Contact(4L, "Cairedine", "KALAI", "ck@acme.com", "0603530378"));
         }
     }
+
 }

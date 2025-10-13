@@ -1,9 +1,6 @@
 package com.cairedine.gestion.contact.domain.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -34,10 +31,22 @@ public class Contact {
     @NotBlank(message = "Le Numéro de téléphone est obligatoire")
     private String phone;
 
-    public Contact(String ada, String lovelace, String mail, String number) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") // clé étrangère dans la table contact
+    private DBUser owner;
+
+    public Contact(Long id, String ada, String lovelace, String mail, String number) {
+        this.id = id;
         this.firstName = ada;
         this.lastName = lovelace;
         this.email = mail;
         this.phone = number;
+    }
+
+    public Contact(String firstName, String lastName, String email, String phone) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
     }
 }

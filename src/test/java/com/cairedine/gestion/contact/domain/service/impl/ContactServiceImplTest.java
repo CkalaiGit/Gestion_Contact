@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -85,8 +86,8 @@ class ContactServiceImplTest {
 
         // Vérifie le tri: lastName ASC puis firstName ASC
         Sort sort = used.getSort();
-        Assertions.assertEquals(Sort.Direction.ASC, sort.getOrderFor("lastName").getDirection());
-        Assertions.assertEquals(Sort.Direction.ASC, sort.getOrderFor("firstName").getDirection());
+        Assertions.assertEquals(Sort.Direction.ASC, Objects.requireNonNull(sort.getOrderFor("lastName")).getDirection());
+        Assertions.assertEquals(Sort.Direction.ASC, Objects.requireNonNull(sort.getOrderFor("firstName")).getDirection());
     }
 
     @Test
