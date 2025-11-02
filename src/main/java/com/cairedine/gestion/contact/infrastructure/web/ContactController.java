@@ -6,6 +6,8 @@ import com.cairedine.gestion.contact.domain.service.IContactService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,15 +24,18 @@ public class ContactController {
     private final IContactService iContactService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String list(@RequestParam(value = "q", required = false) String query,
                        @RequestParam(value = "page", defaultValue = "0") int page,
                        @RequestParam(value = "size", defaultValue = "10") int size,
+                       @AuthenticationPrincipal org.springframework.security.core.userdetails.User me,
                        Model model) {
 
         if (size != 5 && size != 10 && size != 15) size = 10;
         if (page < 0) page = 0;
 
-        Page<Contact> contactsPage = iContactService.findPage(query, page, size);
+        // Filtrer/segmenter par utilisateur courant si ta logique le nécessite
+        Page<Contact> contactsPage = iContactService.findPageForUser(me.getUsername(), query, page, size);
 
         model.addAttribute("contactsPage", contactsPage);
         model.addAttribute("contacts", contactsPage.getContent());

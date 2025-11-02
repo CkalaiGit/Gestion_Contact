@@ -79,4 +79,29 @@ public class ContactServiceImpl implements IContactService {
     public void deleteById(Long id) {
         contactRepository.deleteById(id);
     }
+
+    @Override
+    public Page<Contact> findPageForUser(String username, String query, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Contact findByIdForUser(String username, Long id) {
+        return null;
+    }
+
+    @Override
+    public void createForUser(String username, Contact contact) {
+
+    }
+
+    @Override
+    public void updateForUser(String username, Long id, Contact contact) {
+
+    }
+
+    @Override
+    public void deleteForUser(String username, Long id) {
+
+    }
 }
