@@ -17,9 +17,11 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -39,6 +41,7 @@ class ContactControllerTest {
     private IContactService contactService;
 
     @Test
+    @WithMockUser(username = "alice", roles = {"USER"})
     void shouldRenderContactListWithContacts() throws Exception {
         // Préparation des données simulées
         List<Contact> contacts = List.of(
@@ -47,8 +50,7 @@ class ContactControllerTest {
         );
         Page<Contact> page = new PageImpl<>(contacts, PageRequest.of(0, 10), 2);
 
-        when(contactService.findPage(null, 0, 10)).thenReturn(page);
-
+        given(contactService.findPageForUser("alice", null, 0, 10)).willReturn(page);
         // Appel du contrôleur
         MvcResult result = mvc.perform(get("/contacts"))
                 .andExpect(status().isOk())
