@@ -75,7 +75,6 @@ public class ContactServiceImpl implements IContactService {
                 .orElseThrow(() -> new IllegalArgumentException("Contact introuvable: " + id));
     }
 
-
     @Override
     public void deleteById(Long id) {
         contactRepository.deleteById(id);

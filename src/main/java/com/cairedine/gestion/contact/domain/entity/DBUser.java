@@ -32,7 +32,6 @@ public class DBUser implements UserDetails, Serializable {
     @Column(nullable = false)
     private String password;
 
-    // ✅ Plusieurs rôles par utilisateur
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "user_roles",
