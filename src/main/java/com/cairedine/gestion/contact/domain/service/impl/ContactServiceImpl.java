@@ -1,72 +1,69 @@
 package com.cairedine.gestion.contact.domain.service.impl;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import com.cairedine.gestion.contact.domain.entity.DBUser;
 import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.domain.service.IContactService;
 import com.cairedine.gestion.contact.infrastructure.repository.IContactRepository;
+import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-import static org.springframework.data.domain.Sort.Direction.ASC;
 
 @Service
 @RequiredArgsConstructor
 public class ContactServiceImpl implements IContactService {
 
     private final IContactRepository contactRepository;
+    private final IUserRepository userRepository;
 
     @Override
-    public List<Contact> findAllSorted() {
-        return contactRepository.findAll(Sort.by(ASC, "lastName")
-                .and(Sort.by(ASC, "firstName")));
-    }
-
-    @Override
-    public Page<Contact> findPage(String query, int page, int size) {
+    @Transactional
+    public Page<Contact> findPageForUser(String username, String query, int page, int size) {
         Sort sort = Sort.by(Sort.Direction.ASC, "lastName").and(Sort.by(Sort.Direction.ASC, "firstName"));
         Pageable pageable = PageRequest.of(page, size, sort);
-        if (query == null || query.isBlank()) {
-            return contactRepository.findAll(pageable);
+        if (query == null || query.trim().isEmpty()) {
+            // Tous les contacts de l’utilisateur, sans filtre de recherche
+            return contactRepository.findAllByOwnerUsername(username, pageable);
         }
-        return contactRepository.search(query.trim(), pageable);
+        return contactRepository.searchForUser(username, query, pageable);
     }
 
     @Override
     @Transactional
-    public void create(Contact contact) {
+    public void createForUser(String username, Contact contact) {
         if (contactRepository.existsByEmailIgnoreCase(contact.getEmail())) {
             throw new EmailAlreadyExistsException("Email déjà utilisé: " + contact.getEmail());
         }
+
+        DBUser owner = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable: " + username));
+
+        contact.setOwner(owner);
         contactRepository.save(contact);
     }
 
     @Override
     @Transactional
-    public void update(Long id, Contact contact) {
-
-        Contact existing = contactRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Contact introuvable: " + id));
+    public void updateForUser(String username, Long id, Contact contact) {
+        Contact existingContact = contactRepository.findByIdAndOwnerUsername(id, username)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Contact introuvable ou non autorisé: " + id));
 
         String newEmail = contact.getEmail();
-        if (newEmail != null && !newEmail.equalsIgnoreCase(existing.getEmail())) {
-            if (contactRepository.existsByEmailIgnoreCase(contact.getEmail())) {
+        if (newEmail != null && !newEmail.equalsIgnoreCase(existingContact.getEmail())) {
+            if (contactRepository.existsByEmailIgnoreCase(newEmail)) {
                 throw new EmailAlreadyExistsException("Email déjà utilisé: " + newEmail);
             }
         }
 
-        existing.setFirstName(contact.getFirstName());
-        existing.setLastName(contact.getLastName());
-        existing.setEmail(contact.getEmail());
-        existing.setPhone(contact.getPhone());
+        existingContact.setFirstName(contact.getFirstName());
+        existingContact.setLastName(contact.getLastName());
+        existingContact.setEmail(contact.getEmail());
+        existingContact.setPhone(contact.getPhone());
 
-        contactRepository.save(existing);
+        contactRepository.save(existingContact);
     }
 
     @Override
@@ -81,27 +78,11 @@ public class ContactServiceImpl implements IContactService {
     }
 
     @Override
-    public Page<Contact> findPageForUser(String username, String query, int page, int size) {
-        return null;
-    }
-
-    @Override
     public Contact findByIdForUser(String username, Long id) {
         return null;
     }
 
     @Override
-    public void createForUser(String username, Contact contact) {
-
-    }
-
-    @Override
-    public void updateForUser(String username, Long id, Contact contact) {
-
-    }
-
-    @Override
     public void deleteForUser(String username, Long id) {
-
     }
 }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -28,14 +29,14 @@ public class ContactController {
     public String list(@RequestParam(value = "q", required = false) String query,
                        @RequestParam(value = "page", defaultValue = "0") int page,
                        @RequestParam(value = "size", defaultValue = "10") int size,
-                       @AuthenticationPrincipal org.springframework.security.core.userdetails.User me,
+                       @AuthenticationPrincipal User user,
                        Model model) {
 
         if (size != 5 && size != 10 && size != 15) size = 10;
         if (page < 0) page = 0;
 
         // Filtrer/segmenter par utilisateur courant si ta logique le nécessite
-        Page<Contact> contactsPage = iContactService.findPageForUser(me.getUsername(), query, page, size);
+        Page<Contact> contactsPage = iContactService.findPageForUser(user.getUsername(), query, page, size);
 
         model.addAttribute("contactsPage", contactsPage);
         model.addAttribute("contacts", contactsPage.getContent());
@@ -48,6 +49,7 @@ public class ContactController {
     }
 
     @GetMapping("/new")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String showCreateForm(Model model) {
         model.addAttribute("pageTitle", "Nouveau contact");
         model.addAttribute("contact", new Contact()); // objet vide pour binding
@@ -55,7 +57,9 @@ public class ContactController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String createContact(
+            @AuthenticationPrincipal User user,
             @Valid @ModelAttribute("contact") Contact contact,
             BindingResult bindingResult,
             Model model,
@@ -67,7 +71,7 @@ public class ContactController {
         }
 
         try {
-            iContactService.create(contact);
+            iContactService.createForUser(user.getUsername(), contact);
         } catch (EmailAlreadyExistsException e) {
             bindingResult.rejectValue("email", "error.contact", e.getMessage());
             model.addAttribute("pageTitle", "Nouveau contact");
@@ -91,13 +95,14 @@ public class ContactController {
                                 @Valid @ModelAttribute("contact") Contact contact,
                                 BindingResult bindingResult,
                                 Model model,
+                                @AuthenticationPrincipal User user,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("pageTitle", "Éditer le contact");
             return "contact/form";
         }
         try {
-            iContactService.update(id, contact); // l’id de l’URL fait foi
+            iContactService.updateForUser(user.getUsername(), id, contact);
         } catch (EmailAlreadyExistsException e) {
             bindingResult.rejectValue("email", "error.contact", e.getMessage());
             model.addAttribute("pageTitle", "Éditer le contact");

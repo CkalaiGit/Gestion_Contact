@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 
 @Entity
-@Table(name = "users") // ⚠ "user" est un mot réservé SQL
+@Table(name = "users") // "user" est un mot réservé SQL
 @Getter
 @Setter
 @NoArgsConstructor

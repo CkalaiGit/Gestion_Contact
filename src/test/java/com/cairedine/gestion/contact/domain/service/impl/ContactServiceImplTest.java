@@ -1,8 +1,10 @@
 package com.cairedine.gestion.contact.domain.service.impl;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import com.cairedine.gestion.contact.domain.entity.DBUser;
 import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.infrastructure.repository.IContactRepository;
+import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,9 +15,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,57 +32,36 @@ class ContactServiceImplTest {
 
     @Mock
     IContactRepository iContactRepository;
+    @Mock
+    IUserRepository iUserRepository;
     @InjectMocks
     ContactServiceImpl contactService;
 
-    @Test
-    void findAll_sortsByLastThenFirstName() {
-        var cairedine = Contact.builder().firstName("cairedine").lastName("KALAI").build();
-        var ada = Contact.builder().firstName("ada").lastName("Lovelace").build();
-        when(iContactRepository.findAll(any(Sort.class))).thenReturn(List.of(ada, cairedine));
-
-        var list = contactService.findAllSorted();
-
-        // Création d'un "captor" pour des arguments de type Sort
-        ArgumentCaptor<Sort> sortCap = ArgumentCaptor.forClass(Sort.class);
-
-        /*
-        Quand Mockito exécute verify(...), il ne se contente pas de dire “ok, l’appel a eu lieu”,
-           il stocke l’argument réel passé dans sortCap.
-         */
-
-        verify(iContactRepository).findAll(sortCap.capture());
-
-        var sort = sortCap.getValue().toString();
-        assertTrue(sort.contains("lastName: ASC"));
-        assertTrue(sort.contains("firstName: ASC"));
-        assertIterableEquals(List.of(ada, cairedine), list);
-
-    }
 
     @ParameterizedTest
     @NullSource
     @EmptySource
     @ValueSource(strings = {" ", "\t", "\n", "   "})
+    @WithMockUser(username = "alice")
     void findPage_noQuery_usesFindAll(String query) {
         // Arrange
         var expectedContact = Contact.builder().firstName("John").lastName("Doe").build();
         Page<Contact> expectedPage = new PageImpl<>(List.of(expectedContact));
-        Mockito.when(iContactRepository.findAll(Mockito.any(Pageable.class))).thenReturn(expectedPage);
+        when(iContactRepository.findAllByOwnerUsername(eq("alice"), any(Pageable.class))).thenReturn(expectedPage);
 
         // Act
-        Page<Contact> result = contactService.findPage(query, 0, 10);
+        Page<Contact> result = contactService.findPageForUser("alice", query, 0, 10);
 
         // Assert
-        Assertions.assertEquals(expectedPage, result);
+        assertEquals(expectedPage, result);
 
         // Vérifie que search N'EST PAS appelé
         Mockito.verify(iContactRepository, never())
-                .search(Mockito.anyString(), Mockito.any(Pageable.class));
+                .searchForUser(anyString(), anyString(), any(Pageable.class));
 
         // Capture et vérifie le Pageable utilisé par findAll
         ArgumentCaptor<Pageable> pageableCap = ArgumentCaptor.forClass(Pageable.class);
-        Mockito.verify(iContactRepository).findAll(pageableCap.capture());
+        Mockito.verify(iContactRepository).findAllByOwnerUsername(eq("alice"), pageableCap.capture());
 
         Pageable used = pageableCap.getValue();
         Assertions.assertEquals(0, used.getPageNumber());
@@ -91,28 +74,28 @@ class ContactServiceImplTest {
     }
 
     @Test
+    @WithMockUser(username = "alice")
     void testFindPageWithQuery() {
         String query = "Doe";
         Pageable pageable = PageRequest.of(1, 5, Sort.by("lastName").and(Sort.by("firstName")));
         var contact = Contact.builder().firstName("John").lastName("Doe").build();
         Page<Contact> expectedPage = new PageImpl<>(List.of(contact));
 
-        Mockito.when(iContactRepository.search(query.trim(), pageable)).thenReturn(expectedPage);
+        Mockito.when(iContactRepository.searchForUser("alice", query.trim(), pageable)).thenReturn(expectedPage);
 
-        Page<Contact> result = contactService.findPage(query, 1, 5);
+        Page<Contact> result = contactService.findPageForUser("alice", query, 1, 5);
 
         Assertions.assertEquals(expectedPage, result);
-        Mockito.verify(iContactRepository).search(query.trim(), pageable);
+        Mockito.verify(iContactRepository).searchForUser("alice", query.trim(), pageable);
     }
 
-    // GIVEN / WHEN / THEN #1 : l'email existe déjà -> exception + pas de save
     @Test
     void create_should_throw_conflict_when_email_exists() {
         var contact = Contact.builder().email("cairedine.kalai@afd_tech.com").build();
         given(iContactRepository.existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com")).willReturn(true);
 
 
-        assertThrows(EmailAlreadyExistsException.class, () -> contactService.create(contact));
+        assertThrows(EmailAlreadyExistsException.class, () -> contactService.createForUser("goku",contact));
 
         then(iContactRepository).should().existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com");
         then(iContactRepository).should(never()).save(any(Contact.class));
@@ -120,13 +103,18 @@ class ContactServiceImplTest {
     }
 
     @Test
+    @WithMockUser(username = "alice")
     void create_should_save_when_email_is_free() {
         // Given
         var contact = Contact.builder().email("cairedine.kalai@afd_tech.com").build();
         given(iContactRepository.existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com")).willReturn(false);
 
+        DBUser dbUser = new DBUser();
+        dbUser.setUsername("alice");
+        given(iUserRepository.findByUsername("alice")).willReturn(Optional.of(dbUser));
+
         // When
-        contactService.create(contact);
+        contactService.createForUser("alice", contact);
 
         // Then
         InOrder inOrder = inOrder(iContactRepository);

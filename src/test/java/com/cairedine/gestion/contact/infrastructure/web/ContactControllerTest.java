@@ -41,7 +41,7 @@ class ContactControllerTest {
     private IContactService contactService;
 
     @Test
-    @WithMockUser(username = "alice", roles = {"USER"})
+    @WithMockUser(username = "alice")
     void shouldRenderContactListWithContacts() throws Exception {
         // Préparation des données simulées
         List<Contact> contacts = List.of(
@@ -89,9 +89,10 @@ class ContactControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "alice")
     void shouldRenderEmptyContactListMessage() throws Exception {
         Page<Contact> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
-        when(contactService.findPage(null, 0, 10)).thenReturn(emptyPage);
+        when(contactService.findPageForUser("alice",null, 0, 10)).thenReturn(emptyPage);
 
         MvcResult result = mvc.perform(get("/contacts"))
                 .andExpect(status().isOk())
@@ -107,6 +108,7 @@ class ContactControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "alice")
     void shouldRenderCreateContactForm() throws Exception {
         MvcResult result = mvc.perform(get("/contacts/new"))
                 .andExpect(status().isOk())
@@ -144,11 +146,12 @@ class ContactControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "alice")
     void shouldCreateContactSuccessfully() throws Exception {
         Contact contact = new Contact(null, "Durand", "Alice", "alice@example.com", "0601020304");
 
         // Simule la création sans exception
-        doNothing().when(contactService).create(any(Contact.class));
+        doNothing().when(contactService).createForUser(any(String.class),any(Contact.class));
 
         mvc.perform(post("/contacts")
                         .param("firstName", contact.getFirstName())
@@ -167,7 +170,7 @@ class ContactControllerTest {
 
         // Simule une exception métier
         doThrow(new EmailAlreadyExistsException("Cet email existe déjà"))
-                .when(contactService).create(any(Contact.class));
+                .when(contactService).createForUser(any(String.class),any(Contact.class));
 
         MvcResult result = mvc.perform(post("/contacts")
                         .param("firstName", contact.getFirstName())
@@ -217,4 +220,5 @@ class ContactControllerTest {
 
         verify(contactService, times(1)).findById(1L);
     }
+
 }
