@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -38,7 +39,7 @@ class ContactControllerTest {
     MockMvc mvc;
 
     @MockitoBean
-    private IContactService contactService;
+    IContactService contactService;
 
     @Test
     @WithMockUser(username = "alice")
@@ -146,7 +147,7 @@ class ContactControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "alice")
+    @WithMockUser(username = "alice", roles = "USER")
     void shouldCreateContactSuccessfully() throws Exception {
         Contact contact = new Contact(null, "Durand", "Alice", "alice@example.com", "0601020304");
 
@@ -154,17 +155,17 @@ class ContactControllerTest {
         doNothing().when(contactService).createForUser(any(String.class),any(Contact.class));
 
         mvc.perform(post("/contacts")
-                        .param("firstName", contact.getFirstName())
-                        .param("lastName", contact.getLastName())
-                        .param("email", contact.getEmail())
-                        .param("phone", contact.getPhone())
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                        .flashAttr("contact", contact)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/contacts"))
                 .andExpect(flash().attribute("msg", "Contact créé avec succès"));
+        // Vérifie que le service a été appelé correctement
+        verify(contactService, times(1)).createForUser("alice", contact);
     }
 
     @Test
+    @WithMockUser(username = "alice", roles = "USER")
     void shouldReturnFormWhenEmailAlreadyExists() throws Exception {
         Contact contact = new Contact(null, "Durand", "Alice", "alice@example.com", "0601020304");
 
@@ -177,7 +178,7 @@ class ContactControllerTest {
                         .param("lastName", contact.getLastName())
                         .param("email", contact.getEmail())
                         .param("phone", contact.getPhone())
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("contact/form"))
                 .andReturn();
@@ -191,11 +192,12 @@ class ContactControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteContact() throws Exception {
 
         doNothing().when(contactService).deleteById(1L);
 
-        mvc.perform(delete("/contacts/" + 1L))
+        mvc.perform(delete("/contacts/" + 1L).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/contacts"));
 
@@ -204,21 +206,45 @@ class ContactControllerTest {
 
 
     @Test
-    public void testShowEditForm() throws Exception {
-        Contact mockContact = new Contact();
-        mockContact.setId(1L);
-        mockContact.setLastName("Kalai");
+    @WithMockUser(username = "Alice", roles = "USER")
+    void shouldReturnEditFormForOwnedContact() throws Exception {
+        Contact contact = Contact.builder()
+                .id(1L)
+                .firstName("Alice")
+                .lastName("Durand")
+                .email("Alice.Durand@gmail.com").build();
 
-        when(contactService.findById(1L)).thenReturn(mockContact);
+        given(contactService.findByIdForUser("Alice", 1L, false)).willReturn(contact);
 
-        mvc.perform(get("/contacts/" + 1L + "/edit"))
+        mvc.perform(get("/contacts/1/edit"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("contact/form"))
-                .andExpect(model().attributeExists("contact"))
-                .andExpect(model().attribute("contact", mockContact))
-                .andExpect(model().attribute("pageTitle", "Éditer le contact"));
-
-        verify(contactService, times(1)).findById(1L);
+                .andExpect(model().attribute("contact", contact));
     }
 
+
+    @Test
+    @WithMockUser(username = "alice", roles = "USER")
+    void shouldUpdateContactSuccessfully_WhenFormIsValid() throws Exception {
+        Contact contact = Contact.builder()
+                .id(1L)
+                .firstName("Alice")
+                .lastName("Durand")
+                .email("Alice.Durand@gmail.com")
+                .phone("0601020304")
+                .build();
+
+        doNothing().when(contactService).updateForUser("alice", 1L, contact);
+
+        mvc.perform(post("/contacts/1")
+                        .flashAttr("contact", contact)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/contacts"))
+                .andExpect(flash().attribute("msg", "Contact mis à jour"));
+
+        verify(contactService).updateForUser(eq("alice"), eq(1L), any(Contact.class));
+
+    }
 }

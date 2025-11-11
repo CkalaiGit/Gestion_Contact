@@ -67,22 +67,19 @@ public class ContactServiceImpl implements IContactService {
     }
 
     @Override
-    public Contact findById(Long id) {
-        return contactRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Contact introuvable: " + id));
-    }
-
-    @Override
     public void deleteById(Long id) {
         contactRepository.deleteById(id);
     }
 
     @Override
-    public Contact findByIdForUser(String username, Long id) {
-        return null;
+    public Contact findByIdForUser(String username, Long id, boolean isAdmin) {
+        if (isAdmin) {
+            return contactRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Contact introuvable: " + id));
+        }
+        return contactRepository.findByIdAndOwnerUsername(id, username)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Contact introuvable ou non autorisé: " + id));
     }
 
-    @Override
-    public void deleteForUser(String username, Long id) {
-    }
 }

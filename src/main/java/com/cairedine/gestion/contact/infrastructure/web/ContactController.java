@@ -35,7 +35,6 @@ public class ContactController {
         if (size != 5 && size != 10 && size != 15) size = 10;
         if (page < 0) page = 0;
 
-        // Filtrer/segmenter par utilisateur courant si ta logique le nécessite
         Page<Contact> contactsPage = iContactService.findPageForUser(user.getUsername(), query, page, size);
 
         model.addAttribute("contactsPage", contactsPage);
@@ -83,14 +82,23 @@ public class ContactController {
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model) {
-        Contact contact = iContactService.findById(id);
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public String showEditForm(@PathVariable Long id,
+                               @AuthenticationPrincipal User user,
+                               Model model) {
+        boolean isAdmin = user.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+
+        Contact contact = iContactService.findByIdForUser(user.getUsername(), id, isAdmin);
+
         model.addAttribute("pageTitle", "Éditer le contact");
         model.addAttribute("contact", contact);
         return "contact/form";
     }
 
     @PostMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String updateContact(@PathVariable Long id,
                                 @Valid @ModelAttribute("contact") Contact contact,
                                 BindingResult bindingResult,
@@ -113,6 +121,7 @@ public class ContactController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public String deleteContact(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         iContactService.deleteById(id);
         redirectAttributes.addFlashAttribute("msg", "Contact mis à jour");
