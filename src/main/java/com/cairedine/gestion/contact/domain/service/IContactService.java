@@ -7,7 +7,7 @@ public interface IContactService {
 
     void deleteById(Long id);
 
-    Page<Contact> findPageForUser(String username, String query, int page, int size);
+    Page<Contact> findPageForUser(String sub, String query, int page, int size);
     Contact findByIdForUser(String username, Long id, boolean checkOwnership);
 
     // écriture (associe le propriétaire, vérifie ownership côté service)

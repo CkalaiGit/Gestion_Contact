@@ -20,14 +20,14 @@ public class ContactServiceImpl implements IContactService {
 
     @Override
     @Transactional
-    public Page<Contact> findPageForUser(String username, String query, int page, int size) {
+    public Page<Contact> findPageForUser(String sub, String query, int page, int size) {
         Sort sort = Sort.by(Sort.Direction.ASC, "lastName").and(Sort.by(Sort.Direction.ASC, "firstName"));
         Pageable pageable = PageRequest.of(page, size, sort);
         if (query == null || query.trim().isEmpty()) {
             // Tous les contacts de l’utilisateur, sans filtre de recherche
-            return contactRepository.findAllByOwnerUsername(username, pageable);
+            return contactRepository.findAllByOwnerUsername(sub, pageable);
         }
-        return contactRepository.searchForUser(username, query, pageable);
+        return contactRepository.searchForUser(sub, query, pageable);
     }
 
     @Override

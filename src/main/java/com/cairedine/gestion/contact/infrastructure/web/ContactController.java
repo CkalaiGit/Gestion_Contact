@@ -29,13 +29,13 @@ public class ContactController {
     public String list(@RequestParam(value = "q", required = false) String query,
                        @RequestParam(value = "page", defaultValue = "0") int page,
                        @RequestParam(value = "size", defaultValue = "10") int size,
-                       @AuthenticationPrincipal User user,
+                       @AuthenticationPrincipal String sub,
                        Model model) {
 
         if (size != 5 && size != 10 && size != 15) size = 10;
         if (page < 0) page = 0;
 
-        Page<Contact> contactsPage = iContactService.findPageForUser(user.getUsername(), query, page, size);
+        Page<Contact> contactsPage = iContactService.findPageForUser(sub, query, page, size);
 
         model.addAttribute("contactsPage", contactsPage);
         model.addAttribute("contacts", contactsPage.getContent());

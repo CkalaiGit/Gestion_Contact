@@ -23,7 +23,15 @@ public class OidcUserSyncServiceImpl implements IOidcUserSyncService {
         String name = oidcUser.getFullName();
 
         return userRepository.findBySub(sub)
-                .map(existingUser -> updateExistingUser(existingUser, email, name))
+                // si pas trouvé par sub, on essaie par email
+                .or(() -> userRepository.findByEmail(email))
+                .map(existingUser -> {
+                    // on met à jour le sub si ce n’est pas le même
+                    existingUser.setSub(sub);
+                    existingUser.setEmail(email);
+                    existingUser.setUsername(name);
+                    return userRepository.save(existingUser);
+                })
                 .orElseGet(() -> createNewUser(sub, email, name));
     }
 
