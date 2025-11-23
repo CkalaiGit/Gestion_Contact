@@ -1,13 +1,16 @@
+server:
+  port: 8080
+  error:
+    include-message: always
+
 spring:
-  sql:
-    init:
-      mode: always
-      platform: h2
+
   datasource:
     url: jdbc:h2:mem:contactsdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
     password:
     driver-class-name: org.h2.Driver
+
   jpa:
     defer-datasource-initialization: true
     hibernate:
@@ -15,10 +18,34 @@ spring:
     show-sql: true
     properties:
       hibernate.format_sql: true
+
   h2:
     console:
       enabled: true
       path: /h2-console
-server:
-  error:
-    include-message: always
+
+  sql:
+    init:
+      mode: always
+      platform: h2
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 1093207503972-jaokg1895q22rqqn675btoaaojdg7psg.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - openid
+              - profile
+              - email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
+
+app:
+  jwt:
+    secret: "WjKqTz8cY5XwT6sV3p9uLBTy1H4q8DM7L3f9mGz2Q0hXc9BjNl4fS6KqV1zMr8Pwz7tZqXH1dP4c8sBr6YsV3w=="
+    expiration-in-seconds: 604800   # 7 jours
