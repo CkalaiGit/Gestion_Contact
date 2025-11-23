@@ -7,5 +7,13 @@ import java.util.Optional;
 
 public interface IUserRepository extends JpaRepository<DBUser, Long> {
 
-    Optional<DBUser> findByUsername(String username);
+    /**
+     * Recherche l'utilisateur via son identifiant stable OIDC (sub).
+     */
+    Optional<DBUser> findBySub(String sub);
+
+    /**
+     * Recherche par email (utile pour mettre à jour l'email si besoin).
+     */
+    Optional<DBUser> findByEmail(String email);
 }

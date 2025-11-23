@@ -32,17 +32,19 @@ public class ContactServiceImpl implements IContactService {
 
     @Override
     @Transactional
-    public void createForUser(String username, Contact contact) {
+    public void createForUser(String sub, Contact contact) {
+
         if (contactRepository.existsByEmailIgnoreCase(contact.getEmail())) {
             throw new EmailAlreadyExistsException("Email déjà utilisé: " + contact.getEmail());
         }
 
-        DBUser owner = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable: " + username));
+        DBUser owner = userRepository.findBySub(sub)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable pour sub: " + sub));
 
         contact.setOwner(owner);
         contactRepository.save(contact);
     }
+
 
     @Override
     @Transactional

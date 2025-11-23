@@ -103,18 +103,24 @@ class ContactServiceImplTest {
     }
 
     @Test
-    @WithMockUser(username = "alice")
+    @WithMockUser(username = "sub-alice-123")  // simulate the sub from the JWT
     void create_should_save_when_email_is_free() {
         // Given
-        var contact = Contact.builder().email("cairedine.kalai@afd_tech.com").build();
-        given(iContactRepository.existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com")).willReturn(false);
+        var contact = Contact.builder()
+                .email("cairedine.kalai@afd_tech.com")
+                .build();
+
+        given(iContactRepository.existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com"))
+                .willReturn(false);
 
         DBUser dbUser = new DBUser();
-        dbUser.setUsername("alice");
-        given(iUserRepository.findByUsername("alice")).willReturn(Optional.of(dbUser));
+        dbUser.setSub("sub-alice-123");
+
+        given(iUserRepository.findBySub("sub-alice-123"))
+                .willReturn(Optional.of(dbUser));
 
         // When
-        contactService.createForUser("alice", contact);
+        contactService.createForUser("sub-alice-123", contact);
 
         // Then
         InOrder inOrder = inOrder(iContactRepository);
