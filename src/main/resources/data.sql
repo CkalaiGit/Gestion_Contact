@@ -6,7 +6,7 @@
 INSERT INTO users (id, sub, email, username, role)
 VALUES (
     1,
-    'dev-sub-admin-12345',         -- Valeur SUB OIDC factice pour le dev
+    '110736165454351850927',         -- Valeur SUB OIDC factice pour le dev
     'cairedine@gmail.com',
     'Cairedine Kalai',
     'ADMIN'

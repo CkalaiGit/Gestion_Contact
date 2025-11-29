@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/h2-console").permitAll()
                         .requestMatchers("/login").permitAll()   // Google redirige ici au besoin
                         .requestMatchers("/contacts/**").authenticated()
                         .anyRequest().authenticated()
@@ -50,23 +51,19 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .successHandler((request, response, authentication) -> {
 
-                            // 3.1 Récupérer l'utilisateur Google
                             OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
 
-                            // 3.2 Synchroniser DBUser via sub / email
                             DBUser dbUser = oidcUserSyncService.sync(oidcUser);
 
-                            // 3.3 Générer un JWT applicatif à partir du DBUser
                             String jwt = jwtService.generateToken(dbUser);
 
-                            // 3.4 Déposer le JWT dans un cookie sécurisé
+                            //Déposer le JWT dans un cookie sécurisé
                             Cookie cookie = new Cookie("JWT", jwt);
                             cookie.setHttpOnly(true);
                             cookie.setPath("/");
                             cookie.setMaxAge(7 * 24 * 60 * 60); // 7 jours
                             response.addCookie(cookie);
 
-                            // 3.5 Rediriger vers la liste des contacts
                             response.sendRedirect("/contacts");
                         })
                 )

@@ -1,14 +1,17 @@
 package com.cairedine.gestion.contact.infrastructure.web;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import com.cairedine.gestion.contact.domain.entity.DBUser;
 import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.domain.service.IContactService;
+import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -21,6 +24,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/contacts")
 public class ContactController {
+
+    // TODO : Injection du mauvais type dans le contrôleur Tu as utilisé @AuthenticationPrincipal User user (Spring UserDetails).
+    //  Or ton appli est branchée sur OIDC, donc le principal est un OidcUser.
+    //  Spring ne sait pas convertir automatiquement → user était null → NPE (user.getAuthorities()).
+    //  Cause : mauvais type injecté (User au lieu de OidcUser). -> Résolu en utilisant @AuthenticationPrincipal OidcUser oidcUser en lieu de User user.
 
     private final IContactService iContactService;
 
@@ -103,22 +111,30 @@ public class ContactController {
                                 @Valid @ModelAttribute("contact") Contact contact,
                                 BindingResult bindingResult,
                                 Model model,
-                                @AuthenticationPrincipal User user,
+                                @AuthenticationPrincipal OidcUser oidcUser,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("pageTitle", "Éditer le contact");
             return "contact/form";
         }
+
+        // Récupérer ton DBUser en base via le sub
+        IUserRepository userRepository = null; // on passe par un service dans une vraie appli
+        DBUser dbUser = userRepository.findBySub(oidcUser.getSubject())
+                .orElseThrow(() -> new IllegalStateException("Utilisateur non trouvé"));
+
         try {
-            iContactService.updateForUser(user.getUsername(), id, contact);
+            iContactService.updateForUser(dbUser.getSub(), id, contact);
         } catch (EmailAlreadyExistsException e) {
             bindingResult.rejectValue("email", "error.contact", e.getMessage());
             model.addAttribute("pageTitle", "Éditer le contact");
             return "contact/form";
         }
+
         redirectAttributes.addFlashAttribute("msg", "Contact mis à jour");
         return "redirect:/contacts";
     }
+
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
