@@ -1,16 +1,13 @@
 package com.cairedine.gestion.contact.infrastructure.web;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
-import com.cairedine.gestion.contact.domain.entity.DBUser;
 import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.domain.service.IContactService;
-import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,11 +22,11 @@ import java.util.List;
 @RequestMapping("/contacts")
 public class ContactController {
 
-    // TODO : Injection du mauvais type dans le contrôleur Tu as utilisé @AuthenticationPrincipal User user (Spring UserDetails).
-    //  Or ton appli est branchée sur OIDC, donc le principal est un OidcUser.
-    //  Spring ne sait pas convertir automatiquement → user était null → NPE (user.getAuthorities()).
-    //  Cause : mauvais type injecté (User au lieu de OidcUser). -> Résolu en utilisant @AuthenticationPrincipal OidcUser oidcUser en lieu de User user.
-
+    public static final String PAGE_TITLE = "pageTitle";
+    public static final String CONTACT_FORM = "contact/form";
+    public static final String REDIRECT_CONTACTS = "redirect:/contacts";
+    public static final String EDITER_LE_CONTACT = "Éditer le contact";
+    public static final String NOUVEAU_CONTACT = "Nouveau contact";
     private final IContactService iContactService;
 
     @GetMapping
@@ -37,17 +34,21 @@ public class ContactController {
     public String list(@RequestParam(value = "q", required = false) String query,
                        @RequestParam(value = "page", defaultValue = "0") int page,
                        @RequestParam(value = "size", defaultValue = "10") int size,
-                       @AuthenticationPrincipal String sub,
+                       @AuthenticationPrincipal OidcUser user,
                        Model model) {
 
         if (size != 5 && size != 10 && size != 15) size = 10;
         if (page < 0) page = 0;
 
-        Page<Contact> contactsPage = iContactService.findPageForUser(sub, query, page, size);
+        Page<Contact> contactsPage = iContactService.findPageForUser(user.getSubject(), query, page, size);
+
+        if (contactsPage == null) {
+            contactsPage = Page.empty();
+        }
 
         model.addAttribute("contactsPage", contactsPage);
         model.addAttribute("contacts", contactsPage.getContent());
-        model.addAttribute("pageTitle", "Mes contacts");
+        model.addAttribute(PAGE_TITLE, "Mes contacts");
         model.addAttribute("size", size);
         model.addAttribute("q", query);
         model.addAttribute("pageSizes", List.of(5, 10, 15));
@@ -58,51 +59,51 @@ public class ContactController {
     @GetMapping("/new")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String showCreateForm(Model model) {
-        model.addAttribute("pageTitle", "Nouveau contact");
+        model.addAttribute(PAGE_TITLE, NOUVEAU_CONTACT);
         model.addAttribute("contact", new Contact()); // objet vide pour binding
-        return "contact/form";
+        return CONTACT_FORM;
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String createContact(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal OidcUser user,
             @Valid @ModelAttribute("contact") Contact contact,
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("pageTitle", "Nouveau contact");
-            return "contact/form";
+            model.addAttribute(PAGE_TITLE, NOUVEAU_CONTACT);
+            return CONTACT_FORM;
         }
 
         try {
-            iContactService.createForUser(user.getUsername(), contact);
+            iContactService.createForUser(user.getName(), contact);
         } catch (EmailAlreadyExistsException e) {
             bindingResult.rejectValue("email", "error.contact", e.getMessage());
-            model.addAttribute("pageTitle", "Nouveau contact");
-            return "contact/form";
+            model.addAttribute(PAGE_TITLE, NOUVEAU_CONTACT);
+            return CONTACT_FORM;
         }
 
         redirectAttributes.addFlashAttribute("msg", "Contact créé avec succès");
-        return "redirect:/contacts";
+        return REDIRECT_CONTACTS;
     }
 
     @GetMapping("/{id}/edit")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String showEditForm(@PathVariable Long id,
-                               @AuthenticationPrincipal User user,
+                               @AuthenticationPrincipal OidcUser user,
                                Model model) {
         boolean isAdmin = user.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
 
-        Contact contact = iContactService.findByIdForUser(user.getUsername(), id, isAdmin);
+        Contact contact = iContactService.findByIdForUser(user.getName(), id, isAdmin);
 
-        model.addAttribute("pageTitle", "Éditer le contact");
+        model.addAttribute(PAGE_TITLE, EDITER_LE_CONTACT);
         model.addAttribute("contact", contact);
-        return "contact/form";
+        return CONTACT_FORM;
     }
 
     @PostMapping("/{id}")
@@ -111,28 +112,25 @@ public class ContactController {
                                 @Valid @ModelAttribute("contact") Contact contact,
                                 BindingResult bindingResult,
                                 Model model,
-                                @AuthenticationPrincipal OidcUser oidcUser,
+                                @AuthenticationPrincipal OidcUser user,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("pageTitle", "Éditer le contact");
-            return "contact/form";
+            model.addAttribute(PAGE_TITLE, EDITER_LE_CONTACT);
+            return CONTACT_FORM;
         }
 
-        // Récupérer ton DBUser en base via le sub
-        IUserRepository userRepository = null; // on passe par un service dans une vraie appli
-        DBUser dbUser = userRepository.findBySub(oidcUser.getSubject())
-                .orElseThrow(() -> new IllegalStateException("Utilisateur non trouvé"));
+
 
         try {
-            iContactService.updateForUser(dbUser.getSub(), id, contact);
+            iContactService.updateForUser(user.getSubject(), id, contact);
         } catch (EmailAlreadyExistsException e) {
             bindingResult.rejectValue("email", "error.contact", e.getMessage());
-            model.addAttribute("pageTitle", "Éditer le contact");
-            return "contact/form";
+            model.addAttribute(PAGE_TITLE, EDITER_LE_CONTACT);
+            return CONTACT_FORM;
         }
 
         redirectAttributes.addFlashAttribute("msg", "Contact mis à jour");
-        return "redirect:/contacts";
+        return REDIRECT_CONTACTS;
     }
 
 
@@ -141,7 +139,7 @@ public class ContactController {
     public String deleteContact(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         iContactService.deleteById(id);
         redirectAttributes.addFlashAttribute("msg", "Contact mis à jour");
-        return "redirect:/contacts";
+        return REDIRECT_CONTACTS;
     }
 
 

@@ -10,6 +10,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.junit.jupiter.api.Test;
@@ -29,7 +35,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -42,18 +50,27 @@ class ContactControllerTest {
     IContactService contactService;
 
     @Test
-    @WithMockUser(username = "alice")
-    void shouldRenderContactListWithContacts() throws Exception {
+    void should_render_contact_list_when_user_is_authenticated_with_oidc() throws Exception {
         // Préparation des données simulées
         List<Contact> contacts = List.of(
                 new Contact(1L, "Durand", "Alice", "alice@example.com", "0601020304"),
                 new Contact(2L, "Martin", "Bob", "bob@example.com", "0605060708")
         );
+
         Page<Contact> page = new PageImpl<>(contacts, PageRequest.of(0, 10), 2);
 
-        given(contactService.findPageForUser("alice", null, 0, 10)).willReturn(page);
-        // Appel du contrôleur
-        MvcResult result = mvc.perform(get("/contacts"))
+        given(contactService.findPageForUser("110736165454351850927", null, 0, 10)).willReturn(page);
+
+        // Utilisation de la méthode privée pour créer un OIDC user factice
+        OidcUser oidcUser = stubOidcUser();
+
+        // Injection du principal OIDC dans MockMvc
+        MvcResult result = mvc.perform(get("/contacts")
+                        .with(SecurityMockMvcRequestPostProcessors.authentication(
+                                new UsernamePasswordAuthenticationToken(
+                                        oidcUser, "N/A", oidcUser.getAuthorities()
+                                )
+                        )))
                 .andExpect(status().isOk())
                 .andExpect(view().name("contact/list"))
                 .andReturn();
@@ -90,12 +107,17 @@ class ContactControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "alice")
     void shouldRenderEmptyContactListMessage() throws Exception {
         Page<Contact> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
         when(contactService.findPageForUser("alice",null, 0, 10)).thenReturn(emptyPage);
+        OidcUser oidcUser = stubOidcUser();
 
-        MvcResult result = mvc.perform(get("/contacts"))
+        MvcResult result = mvc.perform(get("/contacts")
+                        .with(SecurityMockMvcRequestPostProcessors.authentication(
+                                new UsernamePasswordAuthenticationToken(
+                                        oidcUser, "N/A", oidcUser.getAuthorities()
+                                )
+                        )))
                 .andExpect(status().isOk())
                 .andExpect(view().name("contact/list"))
                 .andReturn();
@@ -193,7 +215,7 @@ class ContactControllerTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testDeleteContact() throws Exception {
+    void testDeleteContact() throws Exception {
 
         doNothing().when(contactService).deleteById(1L);
 
@@ -247,4 +269,23 @@ class ContactControllerTest {
         verify(contactService).updateForUser(eq("alice"), eq(1L), any(Contact.class));
 
     }
+
+    private OidcUser stubOidcUser() {
+        OidcIdToken idToken = new OidcIdToken(
+                "fake-token",
+                Instant.now(),
+                Instant.now().plusSeconds(3600),
+                Map.of(
+                        "sub", "110736165454351850927",
+                        "email", "alice@example.com",
+                        "name", "Alice Durand"
+                )
+        );
+
+        return new DefaultOidcUser(
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                idToken
+        );
+    }
+
 }

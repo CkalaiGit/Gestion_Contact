@@ -24,7 +24,6 @@ public class ContactServiceImpl implements IContactService {
         Sort sort = Sort.by(Sort.Direction.ASC, "lastName").and(Sort.by(Sort.Direction.ASC, "firstName"));
         Pageable pageable = PageRequest.of(page, size, sort);
         if (query == null || query.trim().isEmpty()) {
-            // Tous les contacts de l’utilisateur, sans filtre de recherche
             return contactRepository.findAllByOwnerUsername(sub, pageable);
         }
         return contactRepository.searchForUser(sub, query, pageable);
@@ -35,11 +34,11 @@ public class ContactServiceImpl implements IContactService {
     public void createForUser(String sub, Contact contact) {
 
         if (contactRepository.existsByEmailIgnoreCase(contact.getEmail())) {
-            throw new EmailAlreadyExistsException("Email déjà utilisé: " + contact.getEmail());
+            throw new EmailAlreadyExistsException(STR."Email déjà utilisé: \{contact.getEmail()}");
         }
 
         DBUser owner = userRepository.findBySub(sub)
-                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable pour sub: " + sub));
+                .orElseThrow(() -> new IllegalArgumentException(STR."Utilisateur introuvable pour sub: \{sub}"));
 
         contact.setOwner(owner);
         contactRepository.save(contact);
@@ -48,15 +47,15 @@ public class ContactServiceImpl implements IContactService {
 
     @Override
     @Transactional
-    public void updateForUser(String username, Long id, Contact contact) {
-        Contact existingContact = contactRepository.findByIdAndOwnerUsername(id, username)
+    public void updateForUser(String sub, Long id, Contact contact) {
+        Contact existingContact = contactRepository.findByIdAndOwnerUsername(id, sub)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Contact introuvable ou non autorisé: " + id));
+                        STR."Contact introuvable ou non autorisé: \{id}"));
 
         String newEmail = contact.getEmail();
         if (newEmail != null && !newEmail.equalsIgnoreCase(existingContact.getEmail())) {
             if (contactRepository.existsByEmailIgnoreCase(newEmail)) {
-                throw new EmailAlreadyExistsException("Email déjà utilisé: " + newEmail);
+                throw new EmailAlreadyExistsException(STR."Email déjà utilisé: \{newEmail}");
             }
         }
 
@@ -77,11 +76,11 @@ public class ContactServiceImpl implements IContactService {
     public Contact findByIdForUser(String username, Long id, boolean isAdmin) {
         if (isAdmin) {
             return contactRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Contact introuvable: " + id));
+                    .orElseThrow(() -> new IllegalArgumentException(STR."Contact introuvable: \{id}"));
         }
         return contactRepository.findByIdAndOwnerUsername(id, username)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Contact introuvable ou non autorisé: " + id));
+                        STR."Contact introuvable ou non autorisé: \{id}"));
     }
 
 }
