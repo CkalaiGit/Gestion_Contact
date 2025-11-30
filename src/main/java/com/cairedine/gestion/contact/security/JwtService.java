@@ -29,12 +29,12 @@ public class JwtService {
     public String generateToken(DBUser user) {
 
         return Jwts.builder()
-                .setSubject(user.getSub())  // sub = identifiant stable
+                .subject(user.getSub())
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -75,10 +75,10 @@ public class JwtService {
     // Méthode interne : lire les claims
     // --------------------------
     private Claims getClaims(String token) {
-        return Jwts.parserBuilder()
+        return Jwts.parser()
                 .setSigningKey(secretKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

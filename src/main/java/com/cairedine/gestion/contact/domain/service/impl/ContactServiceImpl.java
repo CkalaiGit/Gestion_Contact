@@ -8,7 +8,10 @@ import com.cairedine.gestion.contact.infrastructure.repository.IContactRepositor
 import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,7 +44,6 @@ public class ContactServiceImpl implements IContactService {
 
         DBUser owner = userRepository.findBySub(sub)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        // Remplacement STR par String.format
                         String.format("Utilisateur introuvable pour sub: %s", sub)
                 ));
 
@@ -89,7 +91,6 @@ public class ContactServiceImpl implements IContactService {
         }
         return contactRepository.findByIdAndOwnerUsername(id, username)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        // Remplacement STR par String.format (%d pour Long)
                         String.format("Contact introuvable ou non autorisé: %d", id)
                 ));
     }
