@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -31,21 +32,24 @@ public class ContactController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public String list(@RequestParam(value = "q", required = false) String query,
-                       @RequestParam(value = "page", defaultValue = "0") int page,
-                       @RequestParam(value = "size", defaultValue = "10") int size,
-                       @AuthenticationPrincipal OidcUser user,
-                       Model model) {
+    public String displayContacts(@RequestParam(value = "q", required = false) String query,
+                               @RequestParam(value = "page", defaultValue = "0") int page,
+                               @RequestParam(value = "size", defaultValue = "10") int size,
+                               @AuthenticationPrincipal OidcUser user,
+                               Model model) {
 
-        if (size != 5 && size != 10 && size != 15) size = 10;
-        if (page < 0) page = 0;
-
-        Page<Contact> contactsPage = iContactService.findPageForUser(user.getSubject(), query, page, size);
-
-        if (contactsPage == null) {
-            contactsPage = Page.empty();
+        // Validation des paramètres
+        if (!List.of(5, 10, 15).contains(size)) {
+            size = 10;
+        }
+        if (page < 0) {
+            page = 0;
         }
 
+        // Le service doit garantir un Page<> non-null (retourner Page.empty() si aucun résultat)
+        Page<Contact> contactsPage = iContactService.findPageForUser(user.getSubject(), query, page, size);
+
+        // Ajout des attributs au modèle
         model.addAttribute("contactsPage", contactsPage);
         model.addAttribute("contacts", contactsPage.getContent());
         model.addAttribute(PAGE_TITLE, "Mes contacts");
@@ -55,6 +59,7 @@ public class ContactController {
 
         return "contact/list";
     }
+
 
     @GetMapping("/new")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")

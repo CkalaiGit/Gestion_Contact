@@ -50,7 +50,7 @@ class ContactControllerIntTest {
     IContactService contactService;
 
     @Test
-    void should_render_contact_list_when_user_is_authenticated_with_oidc() throws Exception {
+    void showUserContactsPage_should_renderContactList_when_contactsAreAvailable() throws Exception {
         // Préparation des données simulées
         List<Contact> contacts = List.of(
                 new Contact(1L, "Durand", "Alice", "alice@example.com", "0601020304"),
@@ -107,7 +107,7 @@ class ContactControllerIntTest {
     }
 
     @Test
-    void shouldRenderEmptyContactListMessage() throws Exception {
+    void showUserContactsPage_should_renderEmptyListMessage_when_contactListIsEmpty() throws Exception {
         Page<Contact> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
         when(contactService.findPageForUser("alice",null, 0, 10)).thenReturn(emptyPage);
         OidcUser oidcUser = stubOidcUser();
@@ -131,9 +131,14 @@ class ContactControllerIntTest {
     }
 
     @Test
-    @WithMockUser(username = "alice")
-    void shouldRenderCreateContactForm() throws Exception {
-        MvcResult result = mvc.perform(get("/contacts/new"))
+    void showCreateContactForm_should_renderTheForm_when_userAccessesCreatePage() throws Exception {
+        OidcUser oidcUser = stubOidcUser();
+        MvcResult result = mvc.perform(get("/contacts/new")
+                        .with(SecurityMockMvcRequestPostProcessors.authentication(
+                                new UsernamePasswordAuthenticationToken(
+                                        oidcUser, "N/A", oidcUser.getAuthorities()
+                                )
+                        )))
                 .andExpect(status().isOk())
                 .andExpect(view().name("contact/form"))
                 .andReturn();
