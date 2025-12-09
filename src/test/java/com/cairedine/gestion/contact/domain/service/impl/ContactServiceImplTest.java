@@ -5,6 +5,7 @@ import com.cairedine.gestion.contact.domain.entity.DBUser;
 import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.infrastructure.repository.IContactRepository;
 import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
+import lombok.NonNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,11 +47,11 @@ class ContactServiceImplTest {
     void findPage_noQuery_usesFindAll(String query) {
         // Arrange
         var expectedContact = Contact.builder().firstName("John").lastName("Doe").build();
-        Page<Contact> expectedPage = new PageImpl<>(List.of(expectedContact));
-        when(iContactRepository.findAllByOwnerUsername(eq("alice"), any(Pageable.class))).thenReturn(expectedPage);
+        Page<@NonNull Contact> expectedPage = new PageImpl<>(List.of(expectedContact));
+        when(iContactRepository.findAllByOwnerSub(eq("alice"), any(Pageable.class))).thenReturn(expectedPage);
 
         // Act
-        Page<Contact> result = contactService.findPageForUser("alice", query, 0, 10);
+        Page<@NonNull Contact> result = contactService.findPageForUser("alice", query, 0, 10);
 
         // Assert
         assertEquals(expectedPage, result);
@@ -61,7 +62,7 @@ class ContactServiceImplTest {
 
         // Capture et vérifie le Pageable utilisé par findAll
         ArgumentCaptor<Pageable> pageableCap = ArgumentCaptor.forClass(Pageable.class);
-        Mockito.verify(iContactRepository).findAllByOwnerUsername(eq("alice"), pageableCap.capture());
+        Mockito.verify(iContactRepository).findAllByOwnerSub(eq("alice"), pageableCap.capture());
 
         Pageable used = pageableCap.getValue();
         Assertions.assertEquals(0, used.getPageNumber());
@@ -79,11 +80,11 @@ class ContactServiceImplTest {
         String query = "Doe";
         Pageable pageable = PageRequest.of(1, 5, Sort.by("lastName").and(Sort.by("firstName")));
         var contact = Contact.builder().firstName("John").lastName("Doe").build();
-        Page<Contact> expectedPage = new PageImpl<>(List.of(contact));
+        Page<@NonNull Contact> expectedPage = new PageImpl<>(List.of(contact));
 
         Mockito.when(iContactRepository.searchForUser("alice", query.trim(), pageable)).thenReturn(expectedPage);
 
-        Page<Contact> result = contactService.findPageForUser("alice", query, 1, 5);
+        Page<@NonNull Contact> result = contactService.findPageForUser("alice", query, 1, 5);
 
         Assertions.assertEquals(expectedPage, result);
         Mockito.verify(iContactRepository).searchForUser("alice", query.trim(), pageable);
