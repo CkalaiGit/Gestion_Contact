@@ -4,6 +4,7 @@ import com.cairedine.gestion.contact.domain.entity.Contact;
 import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.domain.service.IContactService;
 import jakarta.validation.Valid;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequiredArgsConstructor
@@ -45,8 +47,7 @@ public class ContactController {
             page = 0;
         }
 
-        // Le service doit garantir un Page<> non-null (retourner Page.empty() si aucun résultat)
-        Page<Contact> contactsPage = iContactService.findPageForUser(user.getSubject(), query, page, size);
+        Page<@NonNull Contact> contactsPage = iContactService.findPageForUser(user.getSubject(), query, page, size);
 
         // Ajout des attributs au modèle
         model.addAttribute("contactsPage", contactsPage);
@@ -100,7 +101,7 @@ public class ContactController {
                                @AuthenticationPrincipal OidcUser user,
                                Model model) {
         boolean isAdmin = user.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
 
 
         Contact contact = iContactService.findByIdForUser(user.getName(), id, isAdmin);

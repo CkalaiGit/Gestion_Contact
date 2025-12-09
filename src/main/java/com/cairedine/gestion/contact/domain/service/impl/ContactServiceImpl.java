@@ -29,7 +29,7 @@ public class ContactServiceImpl implements IContactService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<Contact> result = (query == null || query.trim().isEmpty())
-                ? contactRepository.findAllByOwnerUsername(sub, pageable)
+                ? contactRepository.findAllByOwnerSub(sub, pageable)
                 : contactRepository.searchForUser(sub, query, pageable);
 
         return result != null ? result : Page.empty();
@@ -58,7 +58,7 @@ public class ContactServiceImpl implements IContactService {
     @Override
     @Transactional
     public void updateForUser(String sub, Long id, Contact contact) {
-        Contact existingContact = contactRepository.findByIdAndOwnerUsername(id, sub)
+        Contact existingContact = contactRepository.findByIdAndOwnerSub(id, sub)
                 .orElseThrow(() -> new IllegalArgumentException(
                         String.format("Contact introuvable ou non autorisé: %d", id)
                 ));
@@ -84,7 +84,7 @@ public class ContactServiceImpl implements IContactService {
     }
 
     @Override
-    public Contact findByIdForUser(String username, Long id, boolean isAdmin) {
+    public Contact findByIdForUser(String sub, Long id, boolean isAdmin) {
         if (isAdmin) {
             return contactRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException(
@@ -92,7 +92,7 @@ public class ContactServiceImpl implements IContactService {
                             String.format("Contact introuvable: %d", id)
                     ));
         }
-        return contactRepository.findByIdAndOwnerUsername(id, username)
+        return contactRepository.findByIdAndOwnerSub(id, sub)
                 .orElseThrow(() -> new IllegalArgumentException(
                         String.format("Contact introuvable ou non autorisé: %d", id)
                 ));

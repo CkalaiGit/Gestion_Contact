@@ -1,6 +1,7 @@
 package com.cairedine.gestion.contact.infrastructure.repository;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,30 +10,31 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface IContactRepository extends JpaRepository<Contact, Long> {
+public interface IContactRepository extends JpaRepository<@NonNull Contact, @NonNull Long> {
 
     @Query("""
-                SELECT c
-                FROM Contact c
-                WHERE c.owner.sub = :sub
-                  AND (
-                      LOWER(c.lastName) LIKE LOWER(CONCAT('%', :q, '%')) OR
-                      LOWER(c.firstName) LIKE LOWER(CONCAT('%', :q, '%')) OR
-                      LOWER(c.email) LIKE LOWER(CONCAT('%', :q, '%'))
-                  )
+            SELECT c
+            FROM Contact c
+            WHERE c.owner.sub = :sub
+              AND (
+                  LOWER(c.lastName) LIKE LOWER(CONCAT('%', :q, '%')) OR
+                  LOWER(c.firstName) LIKE LOWER(CONCAT('%', :q, '%')) OR
+                  LOWER(c.email) LIKE LOWER(CONCAT('%', :q, '%'))
+              )
             """)
-    Page<Contact> searchForUser(String sub, String q, Pageable pageable);
-
+    Page<@NonNull Contact> searchForUser(@Param("sub") String sub,
+                                @Param("q") String q,
+                                Pageable pageable);
 
     @Query("""
             SELECT c
             FROM Contact c
             WHERE c.owner.sub = :sub
             """)
-    Page<Contact> findAllByOwnerUsername(@Param("sub") String sub, Pageable pageable);
+    Page<@NonNull Contact> findAllByOwnerSub(@Param("sub") String sub, Pageable pageable);
 
     boolean existsByEmailIgnoreCase(String email);
 
-    Optional<Contact> findByIdAndOwnerUsername(Long id, String username);
+    Optional<Contact> findByIdAndOwnerSub(Long id, String sub);
 }
 
