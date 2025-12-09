@@ -22,6 +22,7 @@ import java.util.Objects;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/contacts")
+@SuppressWarnings("unused")
 public class ContactController {
 
     public static final String PAGE_TITLE = "pageTitle";
