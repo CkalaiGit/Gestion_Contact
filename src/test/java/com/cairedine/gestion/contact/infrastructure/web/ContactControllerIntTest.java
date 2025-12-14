@@ -26,11 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import org.springframework.security.test.context.support.WithMockUser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -236,17 +233,24 @@ class ContactControllerIntTest {
 
 
     @Test
-    @WithMockUser(username = "Alice", roles = "USER")
-    void shouldReturnEditFormForOwnedContact() throws Exception {
+    void showEditForm_shouldReturnEditForm_whenContactIsOwnedByUser() throws Exception {
         Contact contact = Contact.builder()
                 .id(1L)
-                .firstName("Alice")
-                .lastName("Durand")
-                .email("Alice.Durand@gmail.com").build();
+                .firstName("Ada")
+                .lastName("Lovelace")
+                .email("ada@acme.com")
+                .phone("0601010101")
+                .build();
 
-        given(contactService.findByIdForUser("Alice", 1L, false)).willReturn(contact);
+        OidcUser oidcUser = stubOidcUser(); // renvoie sub = "110736165454351850927"
 
-        mvc.perform(get("/contacts/1/edit"))
+        given(contactService.findByIdForUser("110736165454351850927", 1L, true))
+                .willReturn(contact);
+
+        mvc.perform(get("/contacts/1/edit").with(SecurityMockMvcRequestPostProcessors.authentication(
+                        new UsernamePasswordAuthenticationToken(
+                                oidcUser, "N/A", oidcUser.getAuthorities()
+                        ))))
                 .andExpect(status().isOk())
                 .andExpect(view().name("contact/form"))
                 .andExpect(model().attribute("contact", contact));
@@ -254,7 +258,6 @@ class ContactControllerIntTest {
 
 
     @Test
-    @WithMockUser(username = "alice", roles = "USER")
     void shouldUpdateContactSuccessfully_WhenFormIsValid() throws Exception {
         Contact contact = Contact.builder()
                 .id(1L)
@@ -264,17 +267,22 @@ class ContactControllerIntTest {
                 .phone("0601020304")
                 .build();
 
+        OidcUser oidcUser = stubOidcUser();
+
         doNothing().when(contactService).updateForUser("alice", 1L, contact);
 
         mvc.perform(post("/contacts/1")
                         .flashAttr("contact", contact)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .with(csrf()))
+                        .with(SecurityMockMvcRequestPostProcessors.authentication(
+                                new UsernamePasswordAuthenticationToken(
+                                        oidcUser, "N/A", oidcUser.getAuthorities()
+                                ))))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/contacts"))
                 .andExpect(flash().attribute("msg", "Contact mis à jour"));
 
-        verify(contactService).updateForUser(eq("alice"), eq(1L), any(Contact.class));
+        verify(contactService).updateForUser(eq("110736165454351850927"), eq(1L), any(Contact.class));
 
     }
 

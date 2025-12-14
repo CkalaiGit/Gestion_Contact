@@ -105,7 +105,7 @@ public class ContactController {
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
 
 
-        Contact contact = iContactService.findByIdForUser(user.getName(), id, isAdmin);
+        Contact contact = iContactService.findByIdForUser(user.getSubject(), id, isAdmin);
 
         model.addAttribute(PAGE_TITLE, EDITER_LE_CONTACT);
         model.addAttribute("contact", contact);

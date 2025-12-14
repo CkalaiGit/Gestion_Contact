@@ -7,6 +7,7 @@ import com.cairedine.gestion.contact.domain.service.IContactService;
 import com.cairedine.gestion.contact.infrastructure.repository.IContactRepository;
 import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
 import jakarta.transaction.Transactional;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,11 +25,11 @@ public class ContactServiceImpl implements IContactService {
 
     @Override
     @Transactional
-    public Page<Contact> findPageForUser(String sub, String query, int page, int size) {
+    public Page<@NonNull Contact> findPageForUser(String sub, String query, int page, int size) {
         Sort sort = Sort.by(Sort.Direction.ASC, "lastName", "firstName");
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Contact> result = (query == null || query.trim().isEmpty())
+        Page<@NonNull Contact> result = (query == null || query.trim().isEmpty())
                 ? contactRepository.findAllByOwnerSub(sub, pageable)
                 : contactRepository.searchForUser(sub, query, pageable);
 
