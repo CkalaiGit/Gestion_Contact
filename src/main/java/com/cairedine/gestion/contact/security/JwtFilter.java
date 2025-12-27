@@ -1,6 +1,7 @@
 package com.cairedine.gestion.contact.security;
 
-import io.micrometer.common.lang.NonNull;
+import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
+import lombok.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -21,10 +22,11 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final IUserRepository iUserRepository; // Vérifiez votre package
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
+                                    @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
         // 1) On cherche le cookie JWT
@@ -35,15 +37,19 @@ public class JwtFilter extends OncePerRequestFilter {
             String sub = jwtService.extractSub(token);
             String role = jwtService.extractRole(token);
 
-            // ROLE_ADMIN → new SimpleGrantedAuthority("ROLE_ADMIN")
-            List<SimpleGrantedAuthority> authorities =
-                    List.of(new SimpleGrantedAuthority("ROLE_" + role));
+            // On récupère l'utilisateur en base via le sub
+            // S'il n'existe pas, on laisse l'auth vide pour que Security bloque l'accès
+            iUserRepository.findBySub(sub).ifPresent(dbUser -> {
 
-            // Construire l'objet Security
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(sub, null, authorities);
+                List<SimpleGrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                // On passe dbUser (l'objet) au lieu de sub (la String)
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(dbUser, null, authorities);
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            });
         }
 
         filterChain.doFilter(request, response);

@@ -92,15 +92,24 @@ class ContactServiceImplTest {
 
     @Test
     void create_should_throw_conflict_when_email_exists() {
-        var contact = Contact.builder().email("cairedine.kalai@afd_tech.com").build();
-        given(iContactRepository.existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com")).willReturn(true);
+        var email = "cairedine.kalai@afd_tech.com";
+        var contact = Contact.builder().email(email).build();
 
+        var mockOwner = DBUser.builder()
+                .sub("goku")
+                .username("Son Goku")
+                .build();
 
-        assertThrows(EmailAlreadyExistsException.class, () -> contactService.createForUser("goku",contact));
+        // Simulation : l'email existe déjà en base
+        given(iContactRepository.existsByEmailIgnoreCase(email)).willReturn(true);
 
-        then(iContactRepository).should().existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com");
+        assertThrows(EmailAlreadyExistsException.class, () ->
+                contactService.createForUser(mockOwner, contact)
+        );
+
+        then(iContactRepository).should().existsByEmailIgnoreCase(email);
         then(iContactRepository).should(never()).save(any(Contact.class));
-        then(iContactRepository).shouldHaveNoMoreInteractions();
+        then(iUserRepository).shouldHaveNoInteractions();
     }
 
     @Test
@@ -109,6 +118,11 @@ class ContactServiceImplTest {
         // Given
         var contact = Contact.builder()
                 .email("cairedine.kalai@afd_tech.com")
+                .build();
+
+        var mockOwner = DBUser.builder()
+                .sub("goku")
+                .username("Son Goku")
                 .build();
 
         given(iContactRepository.existsByEmailIgnoreCase("cairedine.kalai@afd_tech.com"))
@@ -121,7 +135,7 @@ class ContactServiceImplTest {
                 .willReturn(Optional.of(dbUser));
 
         // When
-        contactService.createForUser("sub-alice-123", contact);
+        contactService.createForUser(mockOwner, contact);
 
         // Then
         InOrder inOrder = inOrder(iContactRepository);

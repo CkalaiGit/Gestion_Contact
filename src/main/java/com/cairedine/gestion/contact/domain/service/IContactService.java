@@ -1,6 +1,7 @@
 package com.cairedine.gestion.contact.domain.service;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import com.cairedine.gestion.contact.domain.entity.DBUser;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
 
@@ -13,7 +14,7 @@ public interface IContactService {
     Contact findByIdForUser(String username, Long id, boolean checkOwnership);
 
     // écriture (associe le propriétaire, vérifie ownership côté service)
-    void createForUser(String username, Contact contact);
+    void createForUser(DBUser owner, Contact contact);
     void updateForUser(String username, Long id, Contact contact);
 
 }

@@ -1,6 +1,7 @@
 package com.cairedine.gestion.contact.infrastructure.web;
 
 import com.cairedine.gestion.contact.domain.entity.Contact;
+import com.cairedine.gestion.contact.domain.entity.DBUser;
 import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.domain.service.IContactService;
 import jakarta.validation.Valid;
@@ -37,7 +38,7 @@ public class ContactController {
     public String displayContacts(@RequestParam(value = "q", required = false) String query,
                                @RequestParam(value = "page", defaultValue = "0") int page,
                                @RequestParam(value = "size", defaultValue = "10") int size,
-                               @AuthenticationPrincipal OidcUser user,
+                               @AuthenticationPrincipal DBUser user,
                                Model model) {
 
         // Validation des paramètres
@@ -48,7 +49,7 @@ public class ContactController {
             page = 0;
         }
 
-        Page<@NonNull Contact> contactsPage = iContactService.findPageForUser(user.getSubject(), query, page, size);
+        Page<@NonNull Contact> contactsPage = iContactService.findPageForUser(user.getSub(), query, page, size);
 
         // Ajout des attributs au modèle
         model.addAttribute("contactsPage", contactsPage);
@@ -73,7 +74,7 @@ public class ContactController {
     @PostMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String createContact(
-            @AuthenticationPrincipal OidcUser user,
+            @AuthenticationPrincipal DBUser user,
             @Valid @ModelAttribute("contact") Contact contact,
             BindingResult bindingResult,
             Model model,
@@ -85,7 +86,7 @@ public class ContactController {
         }
 
         try {
-            iContactService.createForUser(user.getName(), contact);
+            iContactService.createForUser(user, contact);
         } catch (EmailAlreadyExistsException e) {
             bindingResult.rejectValue("email", "error.contact", e.getMessage());
             model.addAttribute(PAGE_TITLE, NOUVEAU_CONTACT);
