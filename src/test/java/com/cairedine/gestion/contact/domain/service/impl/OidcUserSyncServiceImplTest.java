@@ -48,13 +48,8 @@ class OidcUserSyncServiceImplTest {
          * Avec willAnswer, on crée un comportement dynamique :
          * L'interception : Mockito "attrape" l'appel à .save().
          * L'invocation : L'objet invocation contient tout ce qui a été envoyé à la méthode (les arguments).
-
-         * Le miroir : getArgument(0) dit à Mockito : "Prends le premier paramètre qu'on vient de te donner
-         * (l'utilisateur modifié) et renvoie-le immédiatement."
-
-         * Cela permet au result dans le test de contenir
-         * toutes les modifications (setSub, setEmail, etc.) effectuées par le service.
-         **/
+         *
+         */
         //when
         DBUser result = oidcUserSyncService.sync(oidcUser);
         //then

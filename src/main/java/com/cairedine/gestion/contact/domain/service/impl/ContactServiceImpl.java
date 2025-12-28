@@ -5,7 +5,6 @@ import com.cairedine.gestion.contact.domain.entity.DBUser;
 import com.cairedine.gestion.contact.domain.exception.EmailAlreadyExistsException;
 import com.cairedine.gestion.contact.domain.service.IContactService;
 import com.cairedine.gestion.contact.infrastructure.repository.IContactRepository;
-import com.cairedine.gestion.contact.infrastructure.repository.IUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +19,6 @@ import org.springframework.stereotype.Service;
 public class ContactServiceImpl implements IContactService {
 
     private final IContactRepository contactRepository;
-    private final IUserRepository userRepository;
-
 
     @Override
     @Transactional
@@ -84,7 +81,6 @@ public class ContactServiceImpl implements IContactService {
         if (isAdmin) {
             return contactRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException(
-                            // Remplacement STR par String.format (%d pour Long)
                             String.format("Contact introuvable: %d", id)
                     ));
         }

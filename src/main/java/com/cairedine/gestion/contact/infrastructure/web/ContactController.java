@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Objects;
 
 @Controller
 @RequiredArgsConstructor
@@ -100,13 +98,11 @@ public class ContactController {
     @GetMapping("/{id}/edit")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public String showEditForm(@PathVariable Long id,
-                               @AuthenticationPrincipal OidcUser user,
+                               @AuthenticationPrincipal DBUser user,
                                Model model) {
-        boolean isAdmin = user.getAuthorities().stream()
-                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
+        boolean isAdmin = "ADMIN".equals(user.getRole());
 
-
-        Contact contact = iContactService.findByIdForUser(user.getSubject(), id, isAdmin);
+        Contact contact = iContactService.findByIdForUser(user.getSub(), id, isAdmin);
 
         model.addAttribute(PAGE_TITLE, EDITER_LE_CONTACT);
         model.addAttribute("contact", contact);
@@ -119,7 +115,7 @@ public class ContactController {
                                 @Valid @ModelAttribute("contact") Contact contact,
                                 BindingResult bindingResult,
                                 Model model,
-                                @AuthenticationPrincipal OidcUser user,
+                                @AuthenticationPrincipal DBUser user,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute(PAGE_TITLE, EDITER_LE_CONTACT);
@@ -127,9 +123,8 @@ public class ContactController {
         }
 
 
-
         try {
-            iContactService.updateForUser(user.getSubject(), id, contact);
+            iContactService.updateForUser(user.getSub() , id, contact);
         } catch (EmailAlreadyExistsException e) {
             bindingResult.rejectValue("email", "error.contact", e.getMessage());
             model.addAttribute(PAGE_TITLE, EDITER_LE_CONTACT);

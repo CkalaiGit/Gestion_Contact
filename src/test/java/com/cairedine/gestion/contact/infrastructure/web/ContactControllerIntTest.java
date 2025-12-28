@@ -14,9 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.core.oidc.OidcIdToken;
-import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,9 +32,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @SpringBootTest
@@ -109,10 +104,8 @@ class ContactControllerIntTest {
 
     @Test
     void showUserContactsPage_should_renderEmptyListMessage_when_contactListIsEmpty() throws Exception {
-        // 1. Préparation d'une page vide
         Page<@NonNull Contact> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        // 2. Création du principal DBUser
         DBUser mockUser = DBUser.builder()
                 .sub("12345")
                 .username("Cairedine")
@@ -152,11 +145,17 @@ class ContactControllerIntTest {
 
     @Test
     void showCreateContactForm_should_renderTheForm_when_userAccessesCreatePage() throws Exception {
-        OidcUser oidcUser = stubOidcUser();
+
+        DBUser mockUser = DBUser.builder()
+                .sub("12345")
+                .username("Cairedine")
+                .role("USER")
+                .build();
+
         MvcResult result = mvc.perform(get("/contacts/new")
                         .with(SecurityMockMvcRequestPostProcessors.authentication(
                                 new UsernamePasswordAuthenticationToken(
-                                        oidcUser, "N/A", oidcUser.getAuthorities()
+                                        mockUser, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
                                 )
                         )))
                 .andExpect(status().isOk())
@@ -278,14 +277,18 @@ class ContactControllerIntTest {
                 .phone("0601010101")
                 .build();
 
-        OidcUser oidcUser = stubOidcUser(); // renvoie sub = "110736165454351850927"
+        DBUser mockUser = DBUser.builder()
+                .sub("google-123")
+                .username("Alice Durand")
+                .role("USER")
+                .build();
 
-        given(contactService.findByIdForUser("110736165454351850927", 1L, true))
+        given(contactService.findByIdForUser(anyString(), anyLong(), anyBoolean()))
                 .willReturn(contact);
 
         mvc.perform(get("/contacts/1/edit").with(SecurityMockMvcRequestPostProcessors.authentication(
                         new UsernamePasswordAuthenticationToken(
-                                oidcUser, "N/A", oidcUser.getAuthorities()
+                                mockUser, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
                         ))))
                 .andExpect(status().isOk())
                 .andExpect(view().name("contact/form"))
@@ -303,54 +306,46 @@ class ContactControllerIntTest {
                 .phone("0601020304")
                 .build();
 
-        OidcUser oidcUser = stubOidcUser();
+        DBUser mockUser = DBUser.builder()
+                .sub("google-123")
+                .username("Alice Durand")
+                .role("USER")
+                .build();
 
-        doNothing().when(contactService).updateForUser("alice", 1L, contact);
+        doNothing().when(contactService).updateForUser(anyString(), anyLong(), any(Contact.class));
 
         mvc.perform(post("/contacts/1")
                         .flashAttr("contact", contact)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .with(SecurityMockMvcRequestPostProcessors.authentication(
                                 new UsernamePasswordAuthenticationToken(
-                                        oidcUser, "N/A", oidcUser.getAuthorities()
+                                        mockUser, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
                                 ))))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/contacts"))
                 .andExpect(flash().attribute("msg", "Contact mis à jour"));
 
-        verify(contactService).updateForUser(eq("110736165454351850927"), eq(1L), any(Contact.class));
+        verify(contactService).updateForUser(eq("google-123"), eq(1L), any(Contact.class));
 
     }
 
     @Test
     void deleteContact_shouldRedirect_whenAdminDeletesContact() throws Exception {
         doNothing().when(contactService).deleteById(1L);
-
+        DBUser mockUser = DBUser.builder()
+                .sub("google-123")
+                .username("Alice Durand")
+                .role("USER")
+                .build();
         mvc.perform(delete("/contacts/1")
                         .with(SecurityMockMvcRequestPostProcessors.authentication(
-                                new UsernamePasswordAuthenticationToken(stubOidcUser(), "N/A", stubOidcUser().getAuthorities()))))
+                                new UsernamePasswordAuthenticationToken(
+                                        mockUser, null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                                ))))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/contacts"));
 
         verify(contactService, times(1)).deleteById(1L);
-    }
-
-    private OidcUser stubOidcUser() {
-        OidcIdToken idToken = new OidcIdToken(
-                "fake-token",
-                Instant.now(),
-                Instant.now().plusSeconds(3600),
-                Map.of(
-                        "sub", "110736165454351850927",
-                        "email", "alice@example.com",
-                        "name", "Alice Durand"
-                )
-        );
-
-        return new DefaultOidcUser(
-                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")),
-                idToken
-        );
     }
 
 }

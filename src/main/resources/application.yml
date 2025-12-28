@@ -4,12 +4,27 @@ server:
     include-message: always
 
 spring:
+  threads:
+    virtual:
+      enabled: true
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
 
   datasource:
     url: jdbc:h2:mem:contactsdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
     password:
     driver-class-name: org.h2.Driver
+    hikari:
+      # Nombre maximum de connexions simultanées à la BDD
+      # (Gardez une valeur raisonnable, entre 10 et 50 selon votre serveur BDD)
+      maximum-pool-size: 30
+      # Temps d'attente (ms) pour obtenir une connexion avant de rejeter la requête
+      connection-timeout: 20000
+      # Nom du pool pour le monitoring
+      pool-name: HikariVirtualPool
 
   jpa:
     defer-datasource-initialization: true
